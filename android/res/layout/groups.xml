@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+     >
+    
+   
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/group"
+               android:text="Create New Group"
+               android:layout_marginRight="10dp"
+               android:layout_alignParentRight="true" />
+    
+     <EditText
+         android:id="@+id/edttext1"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_alignParentLeft="true"
+         android:hint="Enter Group Name" />
+
+      <TextView android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id = "@+id/defaultGroup"
+                android:layout_below="@id/group"/>
+     
+     <ListView 
+    			android:id="@+id/listgroupview"
+    			android:layout_width="wrap_content"
+    			android:layout_height="wrap_content"
+    			android:layout_below="@id/defaultGroup" /> 
+</RelativeLayout>

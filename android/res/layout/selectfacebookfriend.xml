@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/selection_pop"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    
+    
+     >
+     
+   <Button 
+       android:layout_width="wrap_content"
+       android:layout_height="wrap_content"
+       android:id = "@+id/donebtn" 
+       android:text="Done"
+       
+       android:onClick="onDone"/>
+   <Button 
+       android:layout_width="wrap_content" 
+       android:layout_height="wrap_content"
+       android:id="@+id/selectallbtn"
+       android:layout_below="@id/donebtn"
+       android:text="Select All"
+       android:onClick="SelectAll" />
+   <Button 
+               android:layout_width="wrap_content"
+               android:layout_height="wrap_content"
+               android:id="@+id/deselectallbtn"
+               android:layout_below="@id/donebtn"
+               android:layout_toRightOf="@id/selectallbtn"
+               android:text="Deselect All"
+               android:onClick="DeselectAll" />
+          
+        <ListView 
+    android:id="@+id/friendlist1"
+    android:layout_width="wrap_content"
+    android:layout_below="@id/selectallbtn"
+    android:layout_height="fill_parent"/> 
+</RelativeLayout>

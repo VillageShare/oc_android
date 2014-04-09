@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    	android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:id="@+id/sharefilewith"
+        android:orientation="vertical"
+         android:background="@android:color/background_light" >
+<MultiAutoCompleteTextView 
+    android:id="@+id/multiautocompleteshare"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+>   
+
+    
+</MultiAutoCompleteTextView>
+
+<Button
+    android:id="@+id/OKBtn"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_below="@id/multiautocompleteshare"
+    android:text="OK"
+    />
+<Button
+    android:id="@+id/CancelBtn"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_toRightOf="@id/OKBtn"
+    android:layout_below="@id/multiautocompleteshare"
+    android:text="Cancel"
+    />
+<ListView
+    android:id="@+id/alreadySharedWithList"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_below="@id/OKBtn"/>
+
+</RelativeLayout>

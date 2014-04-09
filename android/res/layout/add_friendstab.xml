@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+     >
+    
+   
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/btn1"
+               android:text="@string/add"
+               android:layout_marginRight="10dp"
+               android:layout_alignParentRight="true" />
+    
+     <EditText
+         android:id="@+id/edttext1"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_alignParentLeft="true"
+         android:hint="@string/addfriend" />
+
+             <TextView android:layout_width="wrap_content"
+                         android:layout_height="wrap_content"
+                         android:id = "@+id/defaultadd"
+                         android:layout_below="@id/btn1"/>
+     
+        <Spinner
+            android:id="@+id/spinner_addfriends"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@+id/edttext1"
+            android:layout_weight="1"
+            android:entries="@array/server_array"
+            android:prompt="@string/server_location" />
+
+        <ListView 
+    android:id="@+id/listview"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_below="@id/defaultadd" /> 
+</RelativeLayout>
