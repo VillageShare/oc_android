@@ -225,6 +225,26 @@ public class FileDisplayActivity extends     FileActivity       //ShelokFragment
         // ContentResolver.setSyncAutomatically(getAccount(),
         // AccountAuthenticator.AUTHORITY,true);
         
+
+        /** 
+         * ?????
+         * Broadcast receiver that is called by the service which downloads the
+         files to the phone
+         */
+        
+        instantdownloadreceiver = new BroadcastReceiver() {
+
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String message = intent.getStringExtra("message");
+                instantDownloadFile();  //????
+                // make the http request and update the ui to include the sharer
+                // information
+                //FIXME
+            }
+        };
+        registerReceiver(instantdownloadreceiver, new IntentFilter(instantDownloadSharedFilesService.NOTIFICATION));
+        
         //////////////
         
         
@@ -267,25 +287,6 @@ public class FileDisplayActivity extends     FileActivity       //ShelokFragment
         shareNotifier.setAutoCancel(true);          //dissapear when touched
        
         
-        /** 
-         * ?????
-         * Broadcast receiver that is called by the service which downloads the
-         files to the phone
-         */
-        
-        instantdownloadreceiver = new BroadcastReceiver() {
-
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                String message = intent.getStringExtra("message");
-                instantDownloadFile();  //????
-                // make the http request and update the ui to include the sharer
-                // information
-                //FIXME
-            }
-        };
-        registerReceiver(instantdownloadreceiver, new IntentFilter(instantDownloadSharedFilesService.NOTIFICATION));
-        
 
 
         /**
@@ -302,30 +303,102 @@ public class FileDisplayActivity extends     FileActivity       //ShelokFragment
 
         // Inflate and set the layout view
         setContentView(R.layout.files);
-        mDualPane = getResources().getBoolean(R.bool.large_land_layout); //return boolean associated with ID
+        mDualPane = getResources().getBoolean(R.bool.large_land_layout); //bool is set to false
         mLeftFragmentContainer = findViewById(R.id.left_fragment_container);
         mRightFragmentContainer = findViewById(R.id.right_fragment_container);
         if (savedInstanceState == null) {
+            Log_OC.d(TAG, "onCreate(): first time creating min fragments");
             createMinFragments();                                         //when launching first time create this
         }
 
         // Action bar setup 
-        mDirectories = new CustomArrayAdapter<String>(this, R.layout.sherlock_spinner_dropdown_item); //CusAd overrides colors
+        mDirectories = new CustomArrayAdapter<String>(this, R.layout.sherlock_spinner_dropdown_item); //lists all directories where you can go on drop down bar
+                                                                    //Custom Adapter overrides colors
         getSupportActionBar().setHomeButtonEnabled(true);           // mandatory since Android ICS, according to the official documentation
         setSupportProgressBarIndeterminateVisibility(false);        // always AFTER setContentView(...) ; to work around bug in its implementation
 
         Log_OC.d(TAG, "onCreate() end");
     }
 
+    /**
+     * Called when the ownCloud {@link Account} associated to the Activity was
+     * just updated. Sets  main file handled by activity.
+     */
+    @Override 
+    protected void onAccountSet(boolean stateWasRecovered) {            //part of FileActivity interface launches in onStart()
+        if (getAccount() != null) {          
+            Log_OC.d(TAG, " onAccountSet() start");
+            
+            /*get main file*/
+            mStorageManager = new FileDataStorageManager(getAccount(), getContentResolver());   
+            OCFile file = getFile();                                    // Check whether the 'main' OCFile handled by the Activity is contained in the current Account
+            
+            if (file != null) {
+                if (file.isDown() && file.getLastSyncDateForProperties() == 0) {   //file available locally and ifile is being uploaded
+                    Log_OC.d(TAG, " onAccountSet() main file is "+ file.toString());                                                                  
+                    if (mStorageManager.getFileById(file.getParentId()) == null) { // upload in progress - right now, files are not inserted in the local cache until the upload is successful
+                        file = null;                                               // not able to know the directory where thefile is uploading
+                    }
+                } else {
+                    Log_OC.d(TAG, " onAccountSet() main file is not available");
+                    file = mStorageManager.getFileByPath(file.getRemotePath());    // currentDir = null if not in the current Account
+                }
+            } else {
+                Log_OC.d(TAG, " onAccountSet() main file is null and set to root");             
+                file = mStorageManager.getFileByPath(OCFile.PATH_SEPARATOR);       // fall back to root folder (never returns null)
+            }
+            
+            setFile(file);
+            Log_OC.d(TAG, " onAccountSet() main file is set to " + file.toString());
+            
+            /*initialize directories*/
+            mDirectories.clear(); //is ArrayAdapter
+            OCFile fileIt = file;
+          
+            while (fileIt != null && fileIt.getFileName() != OCFile.PATH_SEPARATOR) {   //while not root
+                if (fileIt.isDirectory()) {                                             //fill the list of directories of dropdown menu. These are the parents where you can return
+                    mDirectories.add(fileIt.getFileName());
+                }
+                fileIt = mStorageManager.getFileById(fileIt.getParentId());
+            }
+            mDirectories.add(OCFile.PATH_SEPARATOR);
+            
+            /*update fragments */
+            if (!stateWasRecovered) { //first time run              
+                Log_OC.d(TAG, "State was not recovered. Initializing Fragments in onAccountChanged..");
+                
+                initFragmentsWithFile();
+    
+            } else {
+                Log_OC.d(TAG, "stateWasRecovered. Updating visibility");
+                
+                updateFragmentsVisibility(!file.isDirectory());
+                updateNavigationElementsInActionBar(file.isDirectory() ? null : file);
+            }
+    
+        } else {
+            Log_OC.wtf(TAG, "onAccountChanged was called with NULL account associated!");
+        }
+    }
+
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (mDownloadConnection != null)
-            unbindService(mDownloadConnection);
-        if (mUploadConnection != null)
-            unbindService(mUploadConnection);
-        unregisterReceiver(instantdownloadreceiver);
-        //FIXME dbFriends
+    protected void onPause() {
+        super.onPause();
+        Log_OC.e(TAG, "onPause() start");
+        if (mSyncBroadcastReceiver != null) {
+            unregisterReceiver(mSyncBroadcastReceiver);
+            mSyncBroadcastReceiver = null;
+        }
+        if (mUploadFinishReceiver != null) {
+            unregisterReceiver(mUploadFinishReceiver);
+            mUploadFinishReceiver = null;
+        }
+        if (mDownloadFinishReceiver != null) {
+            unregisterReceiver(mDownloadFinishReceiver);
+            mDownloadFinishReceiver = null;
+        }
+    
+        Log_OC.d(TAG, "onPause() end");
     }
 
     @Override
@@ -353,26 +426,6 @@ public class FileDisplayActivity extends     FileActivity       //ShelokFragment
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
-        Log_OC.e(TAG, "onPause() start");
-        if (mSyncBroadcastReceiver != null) {
-            unregisterReceiver(mSyncBroadcastReceiver);
-            mSyncBroadcastReceiver = null;
-        }
-        if (mUploadFinishReceiver != null) {
-            unregisterReceiver(mUploadFinishReceiver);
-            mUploadFinishReceiver = null;
-        }
-        if (mDownloadFinishReceiver != null) {
-            unregisterReceiver(mDownloadFinishReceiver);
-            mDownloadFinishReceiver = null;
-        }
-    
-        Log_OC.d(TAG, "onPause() end");
-    }
-
-    @Override
     protected void onSaveInstanceState(Bundle outState) {
         // responsibility of restore is preferred in onCreate() before than in
         // onRestoreInstanceState when there are Fragments involved
@@ -381,92 +434,54 @@ public class FileDisplayActivity extends     FileActivity       //ShelokFragment
         outState.putParcelable(FileDisplayActivity.KEY_WAITING_TO_PREVIEW, mWaitingToPreview);
         Log_OC.d(TAG, "onSaveInstanceState() end");
     }
-   
 
-    /**
-     * Called when the ownCloud {@link Account} associated to the Activity was
-     * just updated.
-     */
     @Override
-    //part of FileActivity interface
-    //launches in onStart()
-    protected void onAccountSet(boolean stateWasRecovered) { 
-        if (getAccount() != null) {
-            mStorageManager = new FileDataStorageManager(getAccount(), getContentResolver());
-
-            // Check whether the 'main' OCFile handled by the Activity is
-            // contained in the current Account
-            OCFile file = getFile();
-            if (file != null) {
-                if (file.isDown() && file.getLastSyncDateForProperties() == 0) {
-                    // upload in progress - right now, files are not inserted in
-                    // the local cache until the upload is successful
-                    if (mStorageManager.getFileById(file.getParentId()) == null) {
-                        file = null; // not able to know the directory where the
-                                     // file is uploading
-                    }
-                } else {
-                    file = mStorageManager.getFileByPath(file.getRemotePath()); // currentDir = null if not in the current Account
-                }
-            }
-            if (file == null) {
-                // fall back to root folder
-                file = mStorageManager.getFileByPath(OCFile.PATH_SEPARATOR); // never returnsb null
-            }
-            setFile(file);
-            //fill the list of files
-            mDirectories.clear();
-            OCFile fileIt = file;
-            
-            while (fileIt != null && fileIt.getFileName() != OCFile.PATH_SEPARATOR) { //while not root
-                if (fileIt.isDirectory()) {
-                    mDirectories.add(fileIt.getFileName());
-                }
-                fileIt = mStorageManager.getFileById(fileIt.getParentId());
-            }
-            mDirectories.add(OCFile.PATH_SEPARATOR);
-            if (!stateWasRecovered) { //first time run
-                Log_OC.e(TAG, "Initializing Fragments in onAccountChanged..");
-                initFragmentsWithFile();
-
-            } else {
-                updateFragmentsVisibility(!file.isDirectory());
-                updateNavigationElementsInActionBar(file.isDirectory() ? null : file);
-            }
-
-        } else {
-            Log_OC.wtf(TAG, "onAccountChanged was called with NULL account associated!");
-        }
+    protected void onDestroy() {
+        super.onDestroy();
+        if (mDownloadConnection != null)
+            unbindService(mDownloadConnection);
+        if (mUploadConnection != null)
+            unbindService(mUploadConnection);
+        unregisterReceiver(instantdownloadreceiver);
+        //FIXME dbFriends
     }
+
     /* End of life cycle */
     
-    private void createMinFragments() {     //adds new fragment list of files to the activity
+    /**
+     * FRAGMENTS
+     */
+    //onCreate()
+    private void createMinFragments() {                                     //adds new fragment list of files to the activity
         OCFileListFragment listOfFiles = new OCFileListFragment();
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         transaction.add(R.id.left_fragment_container, listOfFiles, TAG_LIST_OF_FILES);
         transaction.commit();
+        Log.d(TAG, "Createminfragments a fragment was added");
+        
     }
-
+    //onStart()
     private void initFragmentsWithFile() {
-        if (getAccount() != null && getFile() != null) {
-            // First fragment
-            OCFileListFragment listOfFiles = getListOfFilesFragment();
-            if (listOfFiles != null) {
-                listOfFiles.listDirectory(getCurrentDir()); //lists the current directory on the view
+        if (getAccount() != null && getFile() != null) {         
+            /* First fragment */
+            OCFileListFragment listOfFiles = getListOfFilesFragment();      //fills out list of files fragment with actual fragment
+            if (listOfFiles != null) {            
+                listOfFiles.listDirectory(getCurrentDir());                 //lists the current directory on the view
+                Log.d(TAG, "First fragment was list of files" + listOfFiles.toString());
             } else {
                 Log.e(TAG, "Still have a chance to lose the initializacion of list fragment >(");
             }
-
-            // Second fragment
+            
+            /* Second fragment */
             OCFile file = getFile();
             Fragment secondFragment = chooseInitialSecondFragment(file); //only if current file is not folder, media or detailFragment
             if (secondFragment != null) {
-                setSecondFragment(secondFragment);                       //
+                setSecondFragment(secondFragment);                       
                 updateFragmentsVisibility(true);
                 updateNavigationElementsInActionBar(file);
 
             } else {
-                cleanSecondFragment();              //remove second fragment from the view
+                cleanSecondFragment();                                  //remove second fragment from the view
             }
 
         } else {
@@ -594,16 +609,7 @@ public class FileDisplayActivity extends     FileActivity       //ShelokFragment
                 boolean detailsFragmentChanged = false;
                 if (waitedPreview) {
                     if (success) {
-                        mWaitingToPreview = mStorageManager.getFileById(mWaitingToPreview.getFileId()); // update
-                                                                                                        // the
-                                                                                                        // file
-                                                                                                        // from
-                                                                                                        // database,
-                                                                                                        // for
-                                                                                                        // the
-                                                                                                        // local
-                                                                                                        // storage
-                                                                                                        // path
+                        mWaitingToPreview = mStorageManager.getFileById(mWaitingToPreview.getFileId()); // update the file from database, for the  local  storage  path
                         if (PreviewMediaFragment.canBePreviewed(mWaitingToPreview)) {
                             startMediaPreview(mWaitingToPreview, 0, true);
                             detailsFragmentChanged = true;
@@ -619,12 +625,12 @@ public class FileDisplayActivity extends     FileActivity       //ShelokFragment
             }
         }
     }
-
+    /* End of Fragments */
     
     /**
-     *  Listeners
+     *  LISTENERS
      */
-    //
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getSherlock().getMenuInflater();
@@ -757,6 +763,43 @@ public class FileDisplayActivity extends     FileActivity       //ShelokFragment
         return true;
     }
 
+    @Override
+    public boolean onNavigationItemSelected(int itemPosition, long itemId) {
+        int i = itemPosition;
+        while (i-- != 0) {
+            onBackPressed();
+        }
+        // the next operation triggers a new call to this method, but it's
+        // necessary to
+        // ensure that the name exposed in the action bar is the current
+        // directory when the
+        // user selected it in the navigation list
+        if (itemPosition != 0)
+            getSupportActionBar().setSelectedNavigationItem(0);
+        return true;
+    }
+
+    /**
+     * Called, when the user selected something for uploading
+     */
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == ACTION_SELECT_CONTENT_FROM_APPS
+                && (resultCode == RESULT_OK || resultCode == UploadFilesActivity.RESULT_OK_AND_MOVE)) {
+            requestSimpleUpload(data, resultCode);
+
+        } else if (requestCode == ACTION_SELECT_MULTIPLE_FILES
+                && (resultCode == RESULT_OK || resultCode == UploadFilesActivity.RESULT_OK_AND_MOVE)) {
+            requestMultipleUpload(data, resultCode);
+
+        }
+    }
+    /*End of listeners */
+    
+    /**
+     * Other
+     */
     private class displayFileTask extends AsyncTask<Void, Void, Integer> {
         final AlertDialog.Builder uploadFile = new AlertDialog.Builder(FileDisplayActivity.this);
         String path;
@@ -923,38 +966,7 @@ public class FileDisplayActivity extends     FileActivity       //ShelokFragment
         }
     }
 
-    @Override
-    public boolean onNavigationItemSelected(int itemPosition, long itemId) {
-        int i = itemPosition;
-        while (i-- != 0) {
-            onBackPressed();
-        }
-        // the next operation triggers a new call to this method, but it's
-        // necessary to
-        // ensure that the name exposed in the action bar is the current
-        // directory when the
-        // user selected it in the navigation list
-        if (itemPosition != 0)
-            getSupportActionBar().setSelectedNavigationItem(0);
-        return true;
-    }
-
-    /**
-     * Called, when the user selected something for uploading
-     */
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == ACTION_SELECT_CONTENT_FROM_APPS
-                && (resultCode == RESULT_OK || resultCode == UploadFilesActivity.RESULT_OK_AND_MOVE)) {
-            requestSimpleUpload(data, resultCode);
-
-        } else if (requestCode == ACTION_SELECT_MULTIPLE_FILES
-                && (resultCode == RESULT_OK || resultCode == UploadFilesActivity.RESULT_OK_AND_MOVE)) {
-            requestMultipleUpload(data, resultCode);
-
-        }
-    }
+  
 
     private void requestMultipleUpload(Intent data, int resultCode) {
         String[] filePaths = data.getStringArrayExtra(UploadFilesActivity.EXTRA_CHOSEN_FILES);
@@ -1207,6 +1219,9 @@ public class FileDisplayActivity extends     FileActivity       //ShelokFragment
 
     }
 
+    /** 
+     * BROADCAST RECEIVERS
+     */
     private class SyncBroadcastReceiver extends BroadcastReceiver {
 
         /**

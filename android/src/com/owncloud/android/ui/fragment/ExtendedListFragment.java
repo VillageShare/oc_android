@@ -45,7 +45,7 @@ public class ExtendedListFragment extends SherlockFragment implements OnItemClic
     
     public void setListAdapter(ListAdapter listAdapter) {
         mList.setAdapter(listAdapter);
-        mList.invalidate();
+        mList.invalidate(); //redraw elements
     }
 
     public ListView getListView() {
@@ -55,7 +55,7 @@ public class ExtendedListFragment extends SherlockFragment implements OnItemClic
     
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        Log_OC.e(TAG, "onCreateView");
+        Log_OC.d(TAG, "onCreateView");
         //mList = new ExtendedListView(getActivity());
         View v = inflater.inflate(R.layout.list_fragment, null);
         mList = (ExtendedListView)(v.findViewById(R.id.list_root));

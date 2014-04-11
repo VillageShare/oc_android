@@ -48,12 +48,14 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.ContextMenu;
+import android.view.LayoutInflater;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
-
+import android.widget.ListView;
 /**
  * A Fragment that lists all files and folders in a given path.
  * 
@@ -81,7 +83,7 @@ public class OCFileListFragment extends ExtendedListFragment implements EditName
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        Log_OC.e(TAG, "onAttach");
+        Log_OC.d(TAG, "onAttach");
         try {
             mContainerActivity = (ContainerActivity) activity;
         } catch (ClassCastException e) {
@@ -89,7 +91,17 @@ public class OCFileListFragment extends ExtendedListFragment implements EditName
         }
     }
     
-    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        Log_OC.i(TAG, "onCreateView() start");
+        View v = super.onCreateView(inflater, container, savedInstanceState);
+        getListView().setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+        Log_OC.i(TAG, "onCreateView() end");
+        return v;
+    }
     /**
      * {@inheritDoc}
      */
@@ -348,7 +360,6 @@ public class OCFileListFragment extends ExtendedListFragment implements EditName
     public void listDirectory(OCFile directory) {
         DataStorageManager storageManager = mContainerActivity.getStorageManager();
         if (storageManager != null) {
-
             // Check input parameters for null
             if(directory == null){
                 if(mFile != null){
@@ -371,7 +382,6 @@ public class OCFileListFragment extends ExtendedListFragment implements EditName
                 mList.setSelectionFromTop(0, 0);
             }
             mFile = directory;
-
         }
     }
     

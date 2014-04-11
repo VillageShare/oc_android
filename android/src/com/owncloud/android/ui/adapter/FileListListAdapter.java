@@ -78,21 +78,21 @@ import com.owncloud.android.ui.activity.TransferServiceGetter;
 /**
  * This Adapter populates a ListView with all files and folders in an ownCloud
  * instance.
- * 
+ * This List Adapter is only instantiated at OCFileListFragment.
  * @author Bartek Przybylski
- * 
- * Here is implemented all of the functionality of that list:
  * 
  * 
  */
 
-//BaseAdapter - implements Adapter that can be used in both ListAdapter and Spinner
-//ListAdapter - interface that fills out ListView
-//OnclickListener -interface for callback to be evoked when a view is clicked
-public class FileListListAdapter extends BaseAdapter implements ListAdapter, OnClickListener {
-    private Context mContext;// contex passed by caller
-    private OCFile mFile = null; // file to share
-    private Vector<OCFile> mFiles = null; //list of files for the adapter
+
+
+
+public class FileListListAdapter extends    BaseAdapter         //BaseAdapter - implements Adapter that can be used in both ListAdapter and Spinner
+                                 implements ListAdapter,        //ListAdapter - interface that fills out ListView
+                                            OnClickListener {   //OnclickListener -interface for callback to be evoked when a view is clicked
+    private Context mContext;                                   // contex passed by caller
+    private OCFile mFile = null;                                // current file or folder
+    private Vector<OCFile> mFiles = null;                       //list of files for the adapter
     private DataStorageManager mStorageManager;
     private Account mAccount;
     private TransferServiceGetter mTransferServiceGetter;
@@ -160,12 +160,12 @@ public class FileListListAdapter extends BaseAdapter implements ListAdapter, OnC
         View view = convertView;
         if (view == null) {
             LayoutInflater inflator = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            view = inflator.inflate(R.layout.list_item, null);
+            view = inflator.inflate(R.layout.oc_list_item, null);
         }
     
-        if (mFiles != null && mFiles.size() > position) { //nonempty list of files
+        if (mFiles != null && mFiles.size() > position) {       //nonempty list of files
             
-          //get user name out of account info
+            //get user name out of account info
             Account account = AccountUtils.getCurrentOwnCloudAccount(mContext);
             String [] accountNames = account.name.split("@");
             if(accountNames.length > 2)
@@ -173,33 +173,27 @@ public class FileListListAdapter extends BaseAdapter implements ListAdapter, OnC
                 accountName = accountNames[0]+"@"+accountNames[1];
                 url = accountNames[2];
             }
+            //Binder for services
+            FileDownloaderBinder downloaderBinder = mTransferServiceGetter.getFileDownloaderBinder();
+            FileUploaderBinder uploaderBinder = mTransferServiceGetter.getFileUploaderBinder();
+            
             
             //set filename
             OCFile file = mFiles.get(position);
-            TextView fileName = (TextView) view.findViewById(R.id.Filename);
+            TextView fileName = (TextView) view.findViewById(R.id.OCFilename);
             String name = file.getFileName(); // file at position 
             fileName.setText(name);
- 
+      
+            //File Icon
+            ImageView fileIcon = (ImageView) view.findViewById(R.id.FileIcon);
+            fileIcon.setImageResource(DisplayUtils.getResourceId(file.getMimetype()));
             
             // users that shared files with me and what files
             fileData = new DbShareFile(mContext); //get info about the files
             Map<String,String> fileSharers = fileData.getUsersWhoSharedFilesWithMe(accountName);
             
-            //Sharer of the file
-            TextView sharer = (TextView)view.findViewById(R.id.sharer);
-            
-            //File Icon
-            ImageView fileIcon = (ImageView) view.findViewById(R.id.imageView1);
-            fileIcon.setImageResource(DisplayUtils.getResourceId(file.getMimetype()));
-            
-            //Image of File state
-            ImageView localStateView = (ImageView) view.findViewById(R.id.imageView2);
-            
-            //???
-            FileDownloaderBinder downloaderBinder = mTransferServiceGetter.getFileDownloaderBinder();
-            FileUploaderBinder uploaderBinder = mTransferServiceGetter.getFileUploaderBinder();
-            
-            //???
+            //Set sharer of the file
+            TextView sharer = (TextView)view.findViewById(R.id.OCFileSharer);
             if(fileSharers.size()!=0 && (!file.equals("Shared") && file.getRemotePath().contains("Shared"))) {
                if(fileSharers.containsKey(name)){
                         sharer.setText(fileSharers.get(name));
@@ -210,26 +204,30 @@ public class FileListListAdapter extends BaseAdapter implements ListAdapter, OnC
             }else {
                         sharer.setText(" ");
                     }
-            //???
-            if (downloaderBinder != null && downloaderBinder.isDownloading(mAccount, file)) {
+            
+            /*
+             * Set icons of file state
+             */
+            ImageView localStateView = (ImageView) view.findViewById(R.id.DownloadIcon);
+            if (downloaderBinder != null && downloaderBinder.isDownloading(mAccount, file)) {   //file is being downloaded 
                 localStateView.setImageResource(R.drawable.downloading_file_indicator);
                 localStateView.setVisibility(View.VISIBLE);
-            } else if (uploaderBinder != null && uploaderBinder.isUploading(mAccount, file)) {
+            } else if (uploaderBinder != null && uploaderBinder.isUploading(mAccount, file)) {  //file is being uploaded
                 localStateView.setImageResource(R.drawable.uploading_file_indicator);
                 localStateView.setVisibility(View.VISIBLE);
-            } else if (file.isDown()) {
+            } else if (file.isDown()) {                             //file is available locally
                 localStateView.setImageResource(R.drawable.local_file_indicator);
                 localStateView.setVisibility(View.VISIBLE);
-            } else {
+            } else {                                                //nothing is happening to the file
                 localStateView.setVisibility(View.INVISIBLE);
             }
             
             /* 
              * Setting the file attributes
-             * */
-            TextView fileSizeV = (TextView) view.findViewById(R.id.file_size);
-            TextView lastModV = (TextView) view.findViewById(R.id.last_mod);
-            ImageView checkBoxV = (ImageView) view.findViewById(R.id.custom_checkbox);
+             */
+            TextView fileSizeV = (TextView) view.findViewById(R.id.OCFileSize);
+            TextView lastModV = (TextView) view.findViewById(R.id.OCLastMod);
+            ImageView checkBoxV = (ImageView) view.findViewById(R.id.OCCheckbox);
             
             if (!file.isDirectory()) {                              //not a folder
                 fileSizeV.setVisibility(View.VISIBLE);
@@ -238,10 +236,11 @@ public class FileListListAdapter extends BaseAdapter implements ListAdapter, OnC
                 lastModV.setText(DisplayUtils.unixTimeToHumanReadable(file.getModificationTimestamp()));
                 // this if-else is needed even thoe fav icon is visible by default
                 // because android reuses views in listview
+                
                 if (!file.keepInSync()) {
-                    view.findViewById(R.id.imageView3).setVisibility(View.GONE);
+                    view.findViewById(R.id.FavoriteIcon).setVisibility(View.GONE);
                 } else {
-                    view.findViewById(R.id.imageView3).setVisibility(View.VISIBLE);
+                    view.findViewById(R.id.FavoriteIcon).setVisibility(View.VISIBLE);
                 }
                 
                 ListView parentList = (ListView)parent;
@@ -264,15 +263,21 @@ public class FileListListAdapter extends BaseAdapter implements ListAdapter, OnC
                 lastModV.setVisibility(View.VISIBLE);
                 lastModV.setText(DisplayUtils.unixTimeToHumanReadable(file.getModificationTimestamp()));
                 checkBoxV.setVisibility(View.GONE);
-                view.findViewById(R.id.imageView3).setVisibility(View.GONE);
+                view.findViewById(R.id.FavoriteIcon).setVisibility(View.GONE);
             }
+            
+            /**
+             * KeepInSync checkbox
+             */
+            
+            
             
             /**
              * Share Button [imageview]
              * implements dialog that allows user to select friends and share file with them
              */
     
-            ImageView shareButton = (ImageView) view.findViewById(R.id.shareItem);
+            ImageView shareButton = (ImageView) view.findViewById(R.id.OCShareItem);
             shareButton.setOnClickListener(new OnClickListener() {
                
                 @Override

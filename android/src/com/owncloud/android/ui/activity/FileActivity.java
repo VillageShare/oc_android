@@ -111,6 +111,7 @@ public abstract class FileActivity extends SherlockFragmentActivity {
     protected void onStart() {
         super.onStart();
         if (mAccountWasSet) {
+            Log_OC.d(TAG, "onStart() launching onAccountSet");
             onAccountSet(mAccountWasRestored);
         }
     }
