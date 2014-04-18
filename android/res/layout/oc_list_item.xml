@@ -22,7 +22,10 @@
     android:layout_width="fill_parent"
     android:background="@drawable/list_selector"
     android:orientation="horizontal"
-    android:layout_height="56dp">
+    android:layout_height="56dp"
+    >
+    
+    
 
     <FrameLayout
         android:layout_width="wrap_content"
@@ -44,14 +47,6 @@
             android:layout_margin="4dp"
             android:src="@drawable/ic_menu_archive" />
 
-        <ImageView
-            android:id="@+id/FavoriteIcon"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom"
-            android:layout_weight=".1"
-            android:maxHeight="15dip"
-            android:src="@drawable/ic_favorite" />
         
     </FrameLayout>
 
@@ -63,7 +58,8 @@
         android:layout_height="match_parent"
         android:layout_weight="1"
         android:gravity="center_vertical"
-        android:orientation="vertical" >
+        android:orientation="vertical"
+         >
 
 
         <TextView
@@ -84,7 +80,9 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="4dp"
             android:layout_marginRight="4dp"
-            android:weightSum="1">
+            android:weightSum="1" 
+            
+            >
 
             <TextView
                 android:id="@+id/OCLastMod"
@@ -117,15 +115,16 @@
 
 
 	
-    <ImageView
-        android:id="@+id/OCCheckbox"
+    <CheckBox
+        android:id="@+id/OCKeepInSync"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical"
         android:layout_marginLeft="4dp"
         android:layout_marginRight="4dp"
-        android:gravity=""
-        android:src="@android:drawable/checkbox_off_background" />
+        android:gravity="" 
+        android:focusable="false"
+            />
     <ImageView
         android:id="@+id/OCShareItem"
         android:layout_width="wrap_content" 

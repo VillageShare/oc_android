@@ -62,6 +62,17 @@ public class FileDataStorageManager implements DataStorageManager {
         mAccount = account;
     }
 
+    public void updateKeepInSync(OCFile file, boolean keepInSync){
+        ContentValues cv = new ContentValues();
+        cv.put(ProviderTableMeta.FILE_KEEP_IN_SYNC,keepInSync? 1 : 0);
+            
+        if (getContentResolver() != null) {
+            getContentResolver().update(ProviderTableMeta.CONTENT_URI, cv,
+                    ProviderTableMeta._ID + "=?",
+                    new String[] { String.valueOf(file.getFileId()) });
+        }
+    }
+    
     @Override
     public OCFile getFileByPath(String path) {
         Cursor c = getCursorForValue(ProviderTableMeta.FILE_PATH, path);

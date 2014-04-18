@@ -48,7 +48,7 @@ public class FileContentProvider extends ContentProvider {
 
     private DataBaseHelper mDbHelper;
 
-    private static HashMap<String, String> mProjectionMap;
+    private static HashMap<String, String> mProjectionMap; // maps from column names that the caller passes into query to database column names
     static {
         mProjectionMap = new HashMap<String, String>();
         mProjectionMap.put(ProviderTableMeta._ID, ProviderTableMeta._ID);
@@ -208,7 +208,6 @@ public class FileContentProvider extends ContentProvider {
 
         public DataBaseHelper(Context context) {
             super(context, ProviderMeta.DB_NAME, null, ProviderMeta.DB_VERSION);
-
         }
 
         @Override

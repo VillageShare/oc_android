@@ -42,7 +42,9 @@ import org.json.JSONObject;
 
 import android.accounts.Account;
 import android.app.Dialog;
+import android.content.ContentResolver;
 import android.content.Context;
+import android.database.Cursor;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
@@ -56,6 +58,9 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
@@ -67,9 +72,11 @@ import com.owncloud.android.DisplayUtils;
 import com.owncloud.android.R;
 import com.owncloud.android.authentication.AccountUtils;
 import com.owncloud.android.datamodel.DataStorageManager;
+import com.owncloud.android.datamodel.FileDataStorageManager;
 import com.owncloud.android.datamodel.OCFile;
 import com.owncloud.android.db.DbFriends;
 import com.owncloud.android.db.DbShareFile;
+import com.owncloud.android.db.ProviderMeta.ProviderTableMeta;
 import com.owncloud.android.files.services.FileDownloader.FileDownloaderBinder;
 import com.owncloud.android.files.services.FileUploader.FileUploaderBinder;
 import com.owncloud.android.ui.activity.TransferServiceGetter;
@@ -89,13 +96,15 @@ import com.owncloud.android.ui.activity.TransferServiceGetter;
 
 public class FileListListAdapter extends    BaseAdapter         //BaseAdapter - implements Adapter that can be used in both ListAdapter and Spinner
                                  implements ListAdapter,        //ListAdapter - interface that fills out ListView
-                                            OnClickListener {   //OnclickListener -interface for callback to be evoked when a view is clicked
-    private Context mContext;                                   // contex passed by caller
-    private OCFile mFile = null;                                // current file or folder
+                                            OnClickListener     //OnclickListener -interface for callback to be evoked when a view is clicked
+                                            {
+    private Context mContext;                                   //contex passed by caller
+    private OCFile mFile = null;                                //current file or folder
     private Vector<OCFile> mFiles = null;                       //list of files for the adapter
-    private DataStorageManager mStorageManager;
+    private FileDataStorageManager mStorageManager;
     private Account mAccount;
     private TransferServiceGetter mTransferServiceGetter;
+    private ContentResolver mContentResolver;
     
     //total size of a directory (recursive)
     private Long totalSizeOfDirectoriesRecursive = null;
@@ -105,7 +114,8 @@ public class FileListListAdapter extends    BaseAdapter         //BaseAdapter - 
     private static String shareType="0"; //type of sharing (0 user 1 group 3 link)
     private String accountName;
     private String url;
-    
+    private int syncedFiles;        //number of files that should be kept in sync
+    private int MAX_SYNCED = 5;
     //storages
     DbFriends friendsData;
     DbShareFile fileData;
@@ -116,7 +126,15 @@ public class FileListListAdapter extends    BaseAdapter         //BaseAdapter - 
     public FileListListAdapter(Context context, TransferServiceGetter transferServiceGetter) {
         mContext = context;
         mAccount = AccountUtils.getCurrentOwnCloudAccount(mContext);
-        mTransferServiceGetter = transferServiceGetter;    
+        mTransferServiceGetter = transferServiceGetter; 
+        mContentResolver = mContext.getContentResolver();
+        mStorageManager = new FileDataStorageManager(mAccount, mContentResolver);
+        syncedFiles = mContentResolver.query(ProviderTableMeta.CONTENT_URI,      //
+                null,
+                ProviderTableMeta.FILE_KEEP_IN_SYNC + " = ?", //files = 1
+                new String[] {String.valueOf(1)},
+                null).getCount();
+        Toast.makeText(mContext, "There are synced files " + syncedFiles, Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -154,6 +172,21 @@ public class FileListListAdapter extends    BaseAdapter         //BaseAdapter - 
     }
 
     @Override
+    public int getViewTypeCount() {
+        return 1;
+    }
+
+    @Override
+    public boolean hasStableIds() {
+        return true;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return (mFiles == null || mFiles.isEmpty());
+    }
+
+    @Override
     //Filling out the array of files\folders
     public View getView(final int position, View convertView, ViewGroup parent) {
         //FIXME convertview 
@@ -179,11 +212,11 @@ public class FileListListAdapter extends    BaseAdapter         //BaseAdapter - 
             
             
             //set filename
-            OCFile file = mFiles.get(position);
+            OCFile file = (OCFile)getItem(position);
             TextView fileName = (TextView) view.findViewById(R.id.OCFilename);
             String name = file.getFileName(); // file at position 
             fileName.setText(name);
-      
+    
             //File Icon
             ImageView fileIcon = (ImageView) view.findViewById(R.id.FileIcon);
             fileIcon.setImageResource(DisplayUtils.getResourceId(file.getMimetype()));
@@ -222,53 +255,69 @@ public class FileListListAdapter extends    BaseAdapter         //BaseAdapter - 
                 localStateView.setVisibility(View.INVISIBLE);
             }
             
-            /* 
+            /**
+             * KeepInSync checkbox
+             */  
+            
+            //Request number of synced files 
+            
+            
+            //Create  checkbox
+            CheckBox checkBoxV = (CheckBox) view.findViewById(R.id.OCKeepInSync);
+            
+            if (syncedFiles < MAX_SYNCED + 2){
+                if(file.keepInSync()){ 
+                    checkBoxV.setChecked(true);
+                } else {
+                    checkBoxV.setChecked(false);
+                }
+                
+                checkBoxV.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {    
+                @Override
+                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {                  
+                       mStorageManager.updateKeepInSync((OCFile)getItem(position),isChecked);
+                       //update sync files
+                       syncedFiles = mContentResolver.query(ProviderTableMeta.CONTENT_URI,      //
+                               null,
+                               ProviderTableMeta.FILE_KEEP_IN_SYNC + " = ?", //files = 1
+                               new String[] {String.valueOf(1)},
+                               null).getCount();
+                       Toast.makeText(mContext, "There are synced files " + syncedFiles, Toast.LENGTH_SHORT).show();
+                       
+                       //redraw all the list
+                       Toast.makeText(mContext, "Keep in sync is set to " + isChecked, Toast.LENGTH_SHORT).show();
+                       notifyDataSetChanged();
+                     }
+                });
+            } else {
+                if(!file.keepInSync()){
+                    checkBoxV.setVisibility(View.GONE);
+                }
+            }
+            
+            
+            /**
              * Setting the file attributes
              */
             TextView fileSizeV = (TextView) view.findViewById(R.id.OCFileSize);
             TextView lastModV = (TextView) view.findViewById(R.id.OCLastMod);
-            ImageView checkBoxV = (ImageView) view.findViewById(R.id.OCCheckbox);
-            
-            if (!file.isDirectory()) {                              //not a folder
+            if (!file.isDirectory()) {                              //item is a file
                 fileSizeV.setVisibility(View.VISIBLE);
                 fileSizeV.setText(DisplayUtils.bytesToHumanReadable(file.getFileLength()));
                 lastModV.setVisibility(View.VISIBLE);
                 lastModV.setText(DisplayUtils.unixTimeToHumanReadable(file.getModificationTimestamp()));
-                // this if-else is needed even thoe fav icon is visible by default
-                // because android reuses views in listview
-                
-                if (!file.keepInSync()) {
-                    view.findViewById(R.id.FavoriteIcon).setVisibility(View.GONE);
-                } else {
-                    view.findViewById(R.id.FavoriteIcon).setVisibility(View.VISIBLE);
-                }
-                
-                ListView parentList = (ListView)parent;
-                if (parentList.getChoiceMode() == ListView.CHOICE_MODE_NONE) { 
-                    checkBoxV.setVisibility(View.GONE);
-                } else {
-                    if (parentList.isItemChecked(position)) {
-                        checkBoxV.setImageResource(android.R.drawable.checkbox_on_background);
-                    } else {
-                        checkBoxV.setImageResource(android.R.drawable.checkbox_off_background);
-                    }
-                    checkBoxV.setVisibility(View.VISIBLE);
-                }
                 
             } 
-            else {                                                    //a folder
+            else {                                            //item is a folder
                 
                 fileSizeV.setVisibility(View.VISIBLE);
                 fileSizeV.setText(DisplayUtils.bytesToHumanReadable(file.getFileLength()));
                 lastModV.setVisibility(View.VISIBLE);
                 lastModV.setText(DisplayUtils.unixTimeToHumanReadable(file.getModificationTimestamp()));
                 checkBoxV.setVisibility(View.GONE);
-                view.findViewById(R.id.FavoriteIcon).setVisibility(View.GONE);
             }
             
-            /**
-             * KeepInSync checkbox
-             */
+            
             
             
             
@@ -289,7 +338,7 @@ public class FileListListAdapter extends    BaseAdapter         //BaseAdapter - 
                     final ArrayAdapter<String> sharedWithAdapter; //with whom it was shared already
                     final String filePath; // where file is
                     final String fileName = fileToBeShared.getFileName();
-                    final String fileRemotePath = fileToBeShared.getRemotePath();
+                    final String fileRemotePath = fileToBeShared.getRemotePath(); //path on the server
                  
                     
                     // Set up dialog
@@ -505,21 +554,6 @@ public class FileListListAdapter extends    BaseAdapter         //BaseAdapter - 
         return view;
     }// end of getview
 
-    @Override
-    public int getViewTypeCount() {
-        return 1;
-    }
-
-    @Override
-    public boolean hasStableIds() {
-        return true;
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return (mFiles == null || mFiles.isEmpty());
-    }
-
     /**
      * Change the adapted directory for a new one
      * @param directory                 New file to adapt. Can be NULL, meaning "no content to adapt".
@@ -528,7 +562,7 @@ public class FileListListAdapter extends    BaseAdapter         //BaseAdapter - 
     public void swapDirectory(OCFile directory, DataStorageManager updatedStorageManager) {
         mFile = directory;
         if (updatedStorageManager != null && updatedStorageManager != mStorageManager) {
-            mStorageManager = updatedStorageManager;
+            mStorageManager = (FileDataStorageManager)updatedStorageManager;
             mAccount = AccountUtils.getCurrentOwnCloudAccount(mContext);
         }
         if (mStorageManager != null) {
@@ -538,8 +572,8 @@ public class FileListListAdapter extends    BaseAdapter         //BaseAdapter - 
         }
         notifyDataSetChanged();
     }
+
     
-    //FIXME
     @Override
     public void onClick(View arg0) {
         // TODO Auto-generated method stub

@@ -62,7 +62,9 @@ import android.widget.ListView;
  * @author Bartek Przybylski
  * 
  */
-public class OCFileListFragment extends ExtendedListFragment implements EditNameDialogListener, ConfirmationDialogFragmentListener {
+public class OCFileListFragment extends ExtendedListFragment
+                                implements EditNameDialogListener,
+                                           ConfirmationDialogFragmentListener {
     
     private static final String TAG = OCFileListFragment.class.getSimpleName();
 
@@ -98,6 +100,7 @@ public class OCFileListFragment extends ExtendedListFragment implements EditName
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         Log_OC.i(TAG, "onCreateView() start");
         View v = super.onCreateView(inflater, container, savedInstanceState);
+        
         getListView().setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
         Log_OC.i(TAG, "onCreateView() end");
         return v;

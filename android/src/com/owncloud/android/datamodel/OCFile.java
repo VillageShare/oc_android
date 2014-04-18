@@ -95,9 +95,7 @@ public class OCFile implements Parcelable, Comparable<OCFile> {
         mNeedsUpdating = source.readInt() == 0;
         mKeepInSync = source.readInt() == 1;
         mLastSyncDateForProperties = source.readLong();
-        mLastSyncDateForData = source.readLong();
-        
-        
+        mLastSyncDateForData = source.readLong();       
 
     }
 

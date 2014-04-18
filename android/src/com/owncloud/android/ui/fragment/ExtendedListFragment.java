@@ -83,7 +83,7 @@ public class ExtendedListFragment extends SherlockFragment implements OnItemClic
     
     /**
      * Calculates the position of the item that will be used as a reference to reposition the visible items in the list when
-     * the device is turned to other position. 
+        android:focusable="false" * the device is turned to other position. 
      * 
      * THe current policy is take as a reference the visible item in the center of the screen.  
      * 
