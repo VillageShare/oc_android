@@ -99,8 +99,7 @@ public class OCFileListFragment extends ExtendedListFragment
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         Log_OC.i(TAG, "onCreateView() start");
-        View v = super.onCreateView(inflater, container, savedInstanceState);
-        
+        View v = super.onCreateView(inflater, container, savedInstanceState);   
         getListView().setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
         Log_OC.i(TAG, "onCreateView() end");
         return v;

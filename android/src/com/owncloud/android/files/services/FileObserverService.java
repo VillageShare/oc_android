@@ -124,7 +124,7 @@ public class FileObserverService extends Service {
 
     
     /**
-     * Read from the local database the list of files that must to be kept synchronized and 
+     * Read from the local database the list of files that must be kept in sync and 
      * starts file observers to monitor local changes on them
      */
     private void initializeObservedList() {

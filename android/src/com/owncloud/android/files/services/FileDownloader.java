@@ -173,7 +173,7 @@ public class FileDownloader extends Service implements OnDatatransferProgressLis
 
 
     /**
-     * Called when ALL the bound clients were onbound.
+     * Called when ALL the bound clients were unbound.
      */
     @Override
     public boolean onUnbind(Intent intent) {

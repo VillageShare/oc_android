@@ -126,7 +126,7 @@ public class FileSyncAdapter extends AbstractOwnCloudSyncAdapter {
             updateOCVersion();
             mCurrentSyncTime = System.currentTimeMillis();
             if (!mCancellation) {
-                fetchData(OCFile.PATH_SEPARATOR, DataStorageManager.ROOT_PARENT_ID);
+                fetchData(OCFile.PATH_SEPARATOR, DataStorageManager.ROOT_PARENT_ID); //fetch everything from the root
                 
             } else {
                 Log_OC.d(TAG, "Leaving synchronization before any remote request due to cancellation was requested");

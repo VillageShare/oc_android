@@ -44,6 +44,7 @@ import android.accounts.Account;
 import android.app.Dialog;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.os.Handler;
 import android.os.Message;
@@ -69,6 +70,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.owncloud.android.DisplayUtils;
+import com.owncloud.android.Log_OC;
 import com.owncloud.android.R;
 import com.owncloud.android.authentication.AccountUtils;
 import com.owncloud.android.datamodel.DataStorageManager;
@@ -77,8 +79,11 @@ import com.owncloud.android.datamodel.OCFile;
 import com.owncloud.android.db.DbFriends;
 import com.owncloud.android.db.DbShareFile;
 import com.owncloud.android.db.ProviderMeta.ProviderTableMeta;
+import com.owncloud.android.files.services.FileObserverService;
 import com.owncloud.android.files.services.FileDownloader.FileDownloaderBinder;
 import com.owncloud.android.files.services.FileUploader.FileUploaderBinder;
+import com.owncloud.android.operations.SynchronizeFileOperation;
+import com.owncloud.android.ui.activity.FileDisplayActivity;
 import com.owncloud.android.ui.activity.TransferServiceGetter;
 
 
@@ -105,17 +110,13 @@ public class FileListListAdapter extends    BaseAdapter         //BaseAdapter - 
     private Account mAccount;
     private TransferServiceGetter mTransferServiceGetter;
     private ContentResolver mContentResolver;
-    
-    //total size of a directory (recursive)
-    private Long totalSizeOfDirectoriesRecursive = null;
-    private Long lastModifiedOfAllSubdirectories = null;
-  
-    private ArrayAdapter<String> shareWithFriends; // sharing with friends 
+
     private static String shareType="0"; //type of sharing (0 user 1 group 3 link)
     private String accountName;
     private String url;
     private int syncedFiles;        //number of files that should be kept in sync
     private int MAX_SYNCED = 5;
+    private String TAG = FileListListAdapter.class.getSimpleName();
     //storages
     DbFriends friendsData;
     DbShareFile fileData;
@@ -236,9 +237,9 @@ public class FileListListAdapter extends    BaseAdapter         //BaseAdapter - 
                     }
             }else {
                         sharer.setText(" ");
-                    }
+                    }  
             
-            /*
+            /**
              * Set icons of file state
              */
             ImageView localStateView = (ImageView) view.findViewById(R.id.DownloadIcon);
@@ -257,43 +258,54 @@ public class FileListListAdapter extends    BaseAdapter         //BaseAdapter - 
             
             /**
              * KeepInSync checkbox
-             */  
-            
-            //Request number of synced files 
-            
-            
-            //Create  checkbox
+             */ 
             CheckBox checkBoxV = (CheckBox) view.findViewById(R.id.OCKeepInSync);
-            
-            if (syncedFiles < MAX_SYNCED + 2){
-                if(file.keepInSync()){ 
-                    checkBoxV.setChecked(true);
-                } else {
-                    checkBoxV.setChecked(false);
+            checkBoxV.setChecked(file.keepInSync());
+            checkBoxV.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {    
+            @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) { 
+                        OCFile file  =  (OCFile)getItem(position);
+                        //updating view
+                        if(file.keepInSync() && isChecked){            //file is in sync, this is just updating the view
+                            return;
+                        }
+                        if (syncedFiles < MAX_SYNCED || !isChecked ){  //if there is space in max_synced or file is unselected
+                           mStorageManager.updateKeepInSync(file, isChecked); //then we just update stats
+                           //update sync files
+                           syncedFiles = mContentResolver.query(ProviderTableMeta.CONTENT_URI,      //
+                                   null,
+                                   ProviderTableMeta.FILE_KEEP_IN_SYNC + " = ?", //files = 1
+                                   new String[] {String.valueOf(1)},
+                                   null).getCount();
+                           
+                           //update FileObserverService
+                           /*
+                            Intent intent = new Intent(mContext, FileObserverService.class);
+                            intent.putExtra(FileObserverService.KEY_FILE_CMD,
+                                       (isChecked ? FileObserverService.CMD_ADD_OBSERVED_FILE: FileObserverService.CMD_DEL_OBSERVED_FILE));
+                            intent.putExtra(FileObserverService.KEY_CMD_ARG_FILE, file);
+                            intent.putExtra(FileObserverService.KEY_CMD_ARG_ACCOUNT, mAccount);
+                            mContext.startService(intent);
+                            */
+                            if (isChecked) {
+                            //force an immediate synchronization      
+                                /*
+                            SynchronizeFileOperation mLastRemoteOperation = new SynchronizeFileOperation(file, null, mStorageManager, mAccount, true, false, mContext);
+                            mLastRemoteOperation.execute(mAccount, mContext);
+                                  */
+                            }
+                          
+                           Toast.makeText(mContext, "Now there are synced files " + syncedFiles, Toast.LENGTH_SHORT).show();
+                           
+                        } else {                //all the places in max_synced are taken
+                            buttonView.setChecked(!isChecked);
+                            Toast.makeText(mContext, "Too many synced files", Toast.LENGTH_SHORT).show();
+                        }
+                        
+                        
                 }
-                
-                checkBoxV.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {    
-                @Override
-                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {                  
-                       mStorageManager.updateKeepInSync((OCFile)getItem(position),isChecked);
-                       //update sync files
-                       syncedFiles = mContentResolver.query(ProviderTableMeta.CONTENT_URI,      //
-                               null,
-                               ProviderTableMeta.FILE_KEEP_IN_SYNC + " = ?", //files = 1
-                               new String[] {String.valueOf(1)},
-                               null).getCount();
-                       Toast.makeText(mContext, "There are synced files " + syncedFiles, Toast.LENGTH_SHORT).show();
-                       
-                       //redraw all the list
-                       Toast.makeText(mContext, "Keep in sync is set to " + isChecked, Toast.LENGTH_SHORT).show();
-                       notifyDataSetChanged();
-                     }
-                });
-            } else {
-                if(!file.keepInSync()){
-                    checkBoxV.setVisibility(View.GONE);
-                }
-            }
+            });
+           
             
             
             /**
@@ -306,7 +318,7 @@ public class FileListListAdapter extends    BaseAdapter         //BaseAdapter - 
                 fileSizeV.setText(DisplayUtils.bytesToHumanReadable(file.getFileLength()));
                 lastModV.setVisibility(View.VISIBLE);
                 lastModV.setText(DisplayUtils.unixTimeToHumanReadable(file.getModificationTimestamp()));
-                
+                checkBoxV.setVisibility(View.VISIBLE);
             } 
             else {                                            //item is a folder
                 
@@ -316,11 +328,7 @@ public class FileListListAdapter extends    BaseAdapter         //BaseAdapter - 
                 lastModV.setText(DisplayUtils.unixTimeToHumanReadable(file.getModificationTimestamp()));
                 checkBoxV.setVisibility(View.GONE);
             }
-            
-            
-            
-            
-            
+          
             /**
              * Share Button [imageview]
              * implements dialog that allows user to select friends and share file with them
@@ -576,7 +584,7 @@ public class FileListListAdapter extends    BaseAdapter         //BaseAdapter - 
     
     @Override
     public void onClick(View arg0) {
-        // TODO Auto-generated method stub
+        // FIXME ????
         
     }
     

@@ -209,7 +209,7 @@ public class FileDisplayActivity extends     FileActivity       //ShelokFragment
          */
         /////////////////////////
         mHandler = new Handler(); //message handler
-        Button shareButton = (Button) findViewById(R.id.shareItem);     
+            
         notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         dataSource = new DbFriends(this); 
         
@@ -220,10 +220,9 @@ public class FileDisplayActivity extends     FileActivity       //ShelokFragment
         } else {
             mWaitingToPreview = null;
         }
-        // ContentResolver.setIsSyncable(getAccount(),
-        // AccountAuthenticator.AUTHORITY, 1);
-        // ContentResolver.setSyncAutomatically(getAccount(),
-        // AccountAuthenticator.AUTHORITY,true);
+        
+         ContentResolver.setIsSyncable(getAccount(), AccountAuthenticator.AUTHORITY, 1);
+         ContentResolver.setSyncAutomatically(getAccount(), AccountAuthenticator.AUTHORITY,true);
         
 
         /** 
@@ -232,6 +231,7 @@ public class FileDisplayActivity extends     FileActivity       //ShelokFragment
          files to the phone
          */
         
+        /*
         instantdownloadreceiver = new BroadcastReceiver() {
 
             @Override
@@ -244,7 +244,7 @@ public class FileDisplayActivity extends     FileActivity       //ShelokFragment
             }
         };
         registerReceiver(instantdownloadreceiver, new IntentFilter(instantDownloadSharedFilesService.NOTIFICATION));
-        
+        */
         //////////////
         
         
@@ -261,9 +261,11 @@ public class FileDisplayActivity extends     FileActivity       //ShelokFragment
         /**
          * Authorization
          */
-        if(AccountUtils.getCurrentOwnCloudAccount(getBaseContext())!= null) {   //authorization happens here
-            Intent intent = new Intent(this, InitialPageActivity.class);        //if there is an account, it will log in
-            startActivity(intent);                                              //otherwise it will authenticate you
+        if(AccountUtils.getCurrentOwnCloudAccount(getBaseContext())!= null) {//authorization happens here, if there is an account, it will log in otherwise it will authenticate you
+            
+            //Smruthis Initial page activity.
+            Intent intent = new Intent(this, InitialPageActivity.class);        
+            startActivity(intent);                                              
         }
                 
        /**
@@ -334,7 +336,7 @@ public class FileDisplayActivity extends     FileActivity       //ShelokFragment
             OCFile file = getFile();                                    // Check whether the 'main' OCFile handled by the Activity is contained in the current Account
             
             if (file != null) {
-                if (file.isDown() && file.getLastSyncDateForProperties() == 0) {   //file available locally and ifile is being uploaded
+                if (file.isDown() && file.getLastSyncDateForProperties() == 0) {   //file available locally and file is being uploaded
                     Log_OC.d(TAG, " onAccountSet() main file is "+ file.toString());                                                                  
                     if (mStorageManager.getFileById(file.getParentId()) == null) { // upload in progress - right now, files are not inserted in the local cache until the upload is successful
                         file = null;                                               // not able to know the directory where thefile is uploading
@@ -343,7 +345,7 @@ public class FileDisplayActivity extends     FileActivity       //ShelokFragment
                     Log_OC.d(TAG, " onAccountSet() main file is not available");
                     file = mStorageManager.getFileByPath(file.getRemotePath());    // currentDir = null if not in the current Account
                 }
-            } else {
+            } else {// there is no main file
                 Log_OC.d(TAG, " onAccountSet() main file is null and set to root");             
                 file = mStorageManager.getFileByPath(OCFile.PATH_SEPARATOR);       // fall back to root folder (never returns null)
             }
@@ -421,7 +423,7 @@ public class FileDisplayActivity extends     FileActivity       //ShelokFragment
         downloadIntentFilter.addAction(FileDownloader.DOWNLOAD_FINISH_MESSAGE);
         mDownloadFinishReceiver = new DownloadFinishReceiver();
         registerReceiver(mDownloadFinishReceiver, downloadIntentFilter);
-        registerReceiver(instantdownloadreceiver, new IntentFilter(instantDownloadSharedFilesService.NOTIFICATION));
+        //registerReceiver(instantdownloadreceiver, new IntentFilter(instantDownloadSharedFilesService.NOTIFICATION));
         Log_OC.d(TAG, "onResume() end");
     }
 
@@ -442,7 +444,8 @@ public class FileDisplayActivity extends     FileActivity       //ShelokFragment
             unbindService(mDownloadConnection);
         if (mUploadConnection != null)
             unbindService(mUploadConnection);
-        unregisterReceiver(instantdownloadreceiver);
+        //unregisterReceiver(instantdownloadreceiver);
+        dataSource.close();
         //FIXME dbFriends
     }
 
@@ -462,7 +465,7 @@ public class FileDisplayActivity extends     FileActivity       //ShelokFragment
     }
     //onStart()
     private void initFragmentsWithFile() {
-        if (getAccount() != null && getFile() != null) {         
+        if (getAccount() != null && getFile() != null) {   //account and main files are set     
             /* First fragment */
             OCFileListFragment listOfFiles = getListOfFilesFragment();      //fills out list of files fragment with actual fragment
             if (listOfFiles != null) {            
@@ -748,6 +751,10 @@ public class FileDisplayActivity extends     FileActivity       //ShelokFragment
             }
             break;
         }
+        case R.id.action_quit: {
+            
+            finish();
+        }
         default:
             retval = super.onOptionsItemSelected(item);
         }
@@ -859,9 +866,13 @@ public class FileDisplayActivity extends     FileActivity       //ShelokFragment
         bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
         ContentResolver.requestSync(getAccount(), AccountAuthenticator.AUTHORITY, bundle);
 
-        shareDetailsSync();
+        //shareDetailsSync();
     }
-// This is for share notifications fetching data right from the server.
+
+    /**
+     * Sharing
+     */
+    
     public void shareDetailsSync() {
 
         Runnable runnable = new Runnable() {
@@ -945,7 +956,7 @@ public class FileDisplayActivity extends     FileActivity       //ShelokFragment
                 mWaitingToPreview = filesToDownload.get(i);
                 requestForDownload();
                 for (int j = 0; j < 10000; j++)
-                    ;
+                    ; //?????
             }
         }
 
