@@ -5,20 +5,29 @@
         android:id="@+id/sharefilewith"
         android:orientation="vertical"
          android:background="@android:color/background_light" >
-<MultiAutoCompleteTextView 
-    android:id="@+id/multiautocompleteshare"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
->   
 
-    
+ <MultiAutoCompleteTextView 
+    android:id="@+id/multiautocompletesharef"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">      
 </MultiAutoCompleteTextView>
+
+<MultiAutoCompleteTextView 
+    android:id="@+id/multiautocompleteshareg"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content" 
+	android:layout_below="@id/multiautocompletesharef">  
+</MultiAutoCompleteTextView>
+
+
+
+
 
 <Button
     android:id="@+id/OKBtn"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_below="@id/multiautocompleteshare"
+    android:layout_below="@id/multiautocompleteshareg"
     android:text="OK"
     />
 <Button
@@ -26,11 +35,12 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:layout_toRightOf="@id/OKBtn"
-    android:layout_below="@id/multiautocompleteshare"
+    android:layout_below="@id/multiautocompleteshareg"
     android:text="Cancel"
     />
 <ListView
     android:id="@+id/alreadySharedWithList"
+    android:scrollbars="vertical"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:layout_below="@id/OKBtn"/>

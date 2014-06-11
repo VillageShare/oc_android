@@ -24,10 +24,11 @@ import com.owncloud.android.files.services.FriendListNotifierService;
 import com.owncloud.android.files.services.FriendNotifierService;
 import com.owncloud.android.files.services.instantDownloadSharedFilesService;
 /**
- * 
+ * (Now not in use)
  * @author Smruthi Manjunath
  *
  */
+
 public class InitialPageActivity extends Activity {
     String TAG = InitialPageActivity.class.getName();
     Toast toast;

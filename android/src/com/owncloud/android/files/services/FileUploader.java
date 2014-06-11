@@ -34,7 +34,7 @@ import org.apache.jackrabbit.webdav.client.methods.PropFindMethod;
 
 import com.owncloud.android.authentication.AccountAuthenticator;
 import com.owncloud.android.authentication.AuthenticatorActivity;
-import com.owncloud.android.datamodel.FileDataStorageManager;
+import com.owncloud.android.datamodel.OCDataStorageManager;
 import com.owncloud.android.datamodel.OCFile;
 import com.owncloud.android.operations.ChunkedUploadFileOperation;
 import com.owncloud.android.operations.CreateFolderOperation;
@@ -117,7 +117,7 @@ public class FileUploader extends Service implements OnDatatransferProgressListe
     private IBinder mBinder;
     private WebdavClient mUploadClient = null;
     private Account mLastAccount = null;
-    private FileDataStorageManager mStorageManager;
+    private OCDataStorageManager mStorageManager;
 
     private ConcurrentMap<String, UploadFileOperation> mPendingUploads = new ConcurrentHashMap<String, UploadFileOperation>();
     private UploadFileOperation mCurrentUpload = null;
@@ -219,7 +219,7 @@ public class FileUploader extends Service implements OnDatatransferProgressListe
             }
         }
 
-        FileDataStorageManager storageManager = new FileDataStorageManager(account, getContentResolver());
+        OCDataStorageManager storageManager = new OCDataStorageManager(account, getContentResolver());
 
         boolean forceOverwrite = intent.getBooleanExtra(KEY_FORCE_OVERWRITE, false);
         boolean isInstant = intent.getBooleanExtra(KEY_INSTANT_UPLOAD, false);
@@ -508,7 +508,7 @@ public class FileUploader extends Service implements OnDatatransferProgressListe
                 /// prepare client object to send requests to the ownCloud server
                 if (mUploadClient == null || !mLastAccount.equals(mCurrentUpload.getAccount())) {
                     mLastAccount = mCurrentUpload.getAccount();
-                    mStorageManager = new FileDataStorageManager(mLastAccount, getContentResolver());
+                    mStorageManager = new OCDataStorageManager(mLastAccount, getContentResolver());
                     mUploadClient = OwnCloudClientUtils.createOwnCloudClient(mLastAccount, getApplicationContext());
                 }
             
@@ -623,7 +623,7 @@ public class FileUploader extends Service implements OnDatatransferProgressListe
         // file.setEtag(mCurrentUpload.getEtag());    // TODO Etag, where available
     }
 
-    private boolean checkAndFixInstantUploadDirectory(FileDataStorageManager storageManager) {
+    private boolean checkAndFixInstantUploadDirectory(OCDataStorageManager storageManager) {
         String instantUploadDirPath = FileStorageUtils.getInstantUploadFilePath(this, "");
         OCFile instantUploadDir = storageManager.getFileByPath(instantUploadDirPath);
         if (instantUploadDir == null) {
@@ -646,7 +646,7 @@ public class FileUploader extends Service implements OnDatatransferProgressListe
     }
 
     private OCFile obtainNewOCFileToUpload(String remotePath, String localPath, String mimeType,
-            FileDataStorageManager storageManager) {
+            OCDataStorageManager storageManager) {
         OCFile newFile = new OCFile(remotePath);
         newFile.setStoragePath(localPath);
         newFile.setLastSyncDateForProperties(0);

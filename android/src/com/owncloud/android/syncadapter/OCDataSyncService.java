@@ -27,7 +27,7 @@ import android.os.IBinder;
  * @author Bartek Przybylski
  * 
  */
-public class FileSyncService extends Service {
+public class OCDataSyncService extends Service {
     public static final String SYNC_MESSAGE = "ACCOUNT_SYNC";
     public static final String SYNC_FOLDER_REMOTE_PATH = "SYNC_FOLDER_REMOTE_PATH";
     public static final String IN_PROGRESS = "SYNC_IN_PROGRESS";
@@ -46,6 +46,6 @@ public class FileSyncService extends Service {
      */
     @Override
     public IBinder onBind(Intent intent) {
-       return new FileSyncAdapter(getApplicationContext(), true).getSyncAdapterBinder();
+       return new OCDataSyncAdapter(getApplicationContext(), true).getSyncAdapterBinder();
     }
 }

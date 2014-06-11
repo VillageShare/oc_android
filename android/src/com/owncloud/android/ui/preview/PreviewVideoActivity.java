@@ -33,7 +33,7 @@ import android.widget.VideoView;
 import com.owncloud.android.Log_OC;
 import com.owncloud.android.R;
 import com.owncloud.android.datamodel.DataStorageManager;
-import com.owncloud.android.datamodel.FileDataStorageManager;
+import com.owncloud.android.datamodel.OCDataStorageManager;
 import com.owncloud.android.authentication.AccountUtils;
 import com.owncloud.android.authentication.AccountUtils.AccountNotFoundException;
 import com.owncloud.android.datamodel.OCFile;
@@ -203,7 +203,7 @@ public class PreviewVideoActivity extends FileActivity implements OnCompletionLi
             if (!file.isVideo()) {
                 throw new IllegalArgumentException("Non-video file passed as argument");
             }
-            mStorageManager = new FileDataStorageManager(getAccount(), getContentResolver());
+            mStorageManager = new OCDataStorageManager(getAccount(), getContentResolver());
             file = mStorageManager.getFileById(file.getFileId()); 
             if (file != null) {
                 if (file.isDown()) {

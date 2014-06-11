@@ -31,10 +31,17 @@ import com.owncloud.android.R;
 import com.owncloud.android.authentication.AccountAuthenticator;
 import com.owncloud.android.authentication.AuthenticatorActivity;
 import com.owncloud.android.datamodel.DataStorageManager;
-import com.owncloud.android.datamodel.FileDataStorageManager;
+import com.owncloud.android.datamodel.OCDataStorageManager;
 import com.owncloud.android.datamodel.OCFile;
+import com.owncloud.android.db.ProviderMeta.ProviderTableMeta;
 import com.owncloud.android.operations.RemoteOperationResult;
 import com.owncloud.android.operations.SynchronizeFolderOperation;
+import com.owncloud.android.operations.SynchronizeFriends;
+import com.owncloud.android.operations.SynchronizeGroups;
+import com.owncloud.android.operations.SynchronizeKeepInSyncFiles;
+import com.owncloud.android.operations.SynchronizeServerIds;
+import com.owncloud.android.operations.SynchronizeSharedByMeData;
+import com.owncloud.android.operations.SynchronizeSharedWithMeData;
 import com.owncloud.android.operations.UpdateOCVersionOperation;
 import com.owncloud.android.operations.RemoteOperationResult.ResultCode;
 import com.owncloud.android.ui.activity.ErrorsWhileCopyingHandlerActivity;
@@ -59,7 +66,7 @@ import android.os.Bundle;
  * @author Bartek Przybylski
  * @author David A. Velasco
  */
-public class FileSyncAdapter extends AbstractOwnCloudSyncAdapter {
+public class OCDataSyncAdapter extends AbstractOwnCloudSyncAdapter {
 
     private final static String TAG = "FileSyncAdapter";
 
@@ -79,7 +86,7 @@ public class FileSyncAdapter extends AbstractOwnCloudSyncAdapter {
     private Map<String, String> mForgottenLocalFiles;
 
     
-    public FileSyncAdapter(Context context, boolean autoInitialize) {
+    public OCDataSyncAdapter(Context context, boolean autoInitialize) {
         super(context, autoInitialize);
     }
 
@@ -104,7 +111,7 @@ public class FileSyncAdapter extends AbstractOwnCloudSyncAdapter {
 
         this.setAccount(account);
         this.setContentProvider(provider);
-        this.setStorageManager(new FileDataStorageManager(account, getContentProvider()));
+        this.setStorageManager(new OCDataStorageManager(account, getContentProvider()));
         try {
             this.initClientForCurrentAccount();
         } catch (IOException e) {
@@ -122,11 +129,30 @@ public class FileSyncAdapter extends AbstractOwnCloudSyncAdapter {
         Log_OC.d(TAG, "Synchronization of ownCloud account " + account.name + " starting");
         sendStickyBroadcast(true, null, null);  // message to signal the start of the synchronization to the UI
         
+        /**
+         * UPDATING DATA
+         */
         try {
             updateOCVersion();
             mCurrentSyncTime = System.currentTimeMillis();
             if (!mCancellation) {
-                fetchData(OCFile.PATH_SEPARATOR, DataStorageManager.ROOT_PARENT_ID); //fetch everything from the root
+                //UPDATE LIST OF FILES
+                fetchFilesData(OCFile.PATH_SEPARATOR, DataStorageManager.ROOT_PARENT_ID); //fetch everything from the root
+                fetchKeepInSync();
+                //TEST
+                //((OCDataStorageManager)getStorageManager()).printTable(ProviderTableMeta.CONTENT_URI);//default file table
+                //UPDATE SERVER IDs
+                fetchServerIds();
+                //((OCDataStorageManager)getStorageManager()).printTable(ProviderTableMeta.CONTENT_URI);//default file table              
+                //UPDATE SHARED FILES TABLE    
+                fetchSharedWithMeData();
+                fetchSharedByMeData();
+                //UDATE GROUPS
+                fetchGroups();
+                //TEST
+                //((OCDataStorageManager)getStorageManager()).printTable(ProviderTableMeta.CONTENT_URI_SHARED_FILES);
+                fetchFriends();
+                
                 
             } else {
                 Log_OC.d(TAG, "Leaving synchronization before any remote request due to cancellation was requested");
@@ -189,7 +215,7 @@ public class FileSyncAdapter extends AbstractOwnCloudSyncAdapter {
      * @param remotePath        Remote path to the folder to synchronize.
      * @param parentId          Database Id of the folder to synchronize.
      */
-    private void fetchData(String remotePath, long parentId) {
+    private void fetchFilesData(String remotePath, long parentId) {
         
         if (mFailedResultsCounter > MAX_FAILED_RESULTS || isFinisher(mLastFailedResult))
             return;
@@ -206,7 +232,7 @@ public class FileSyncAdapter extends AbstractOwnCloudSyncAdapter {
         
         
         // synchronized folder -> notice to UI - ALWAYS, although !result.isSuccess
-        sendStickyBroadcast(true, remotePath, null);
+        //sendStickyBroadcast(true, remotePath, null);
         
         if (result.isSuccess() || result.getCode() == ResultCode.SYNC_CONFLICT) {
             
@@ -271,7 +297,7 @@ public class FileSyncAdapter extends AbstractOwnCloudSyncAdapter {
             OCFile newFile = files.get(i);
             Log_OC.d("file ", newFile.getFileName()+" "+newFile.getFileId()+" "+newFile.getEtag());
             if (newFile.isDirectory()) {
-                fetchData(newFile.getRemotePath(), newFile.getFileId());
+                fetchFilesData(newFile.getRemotePath(), newFile.getFileId());
                 
                 // Update folder size on DB
                 getStorageManager().calculateFolderSize(newFile.getFileId());                   
@@ -289,14 +315,14 @@ public class FileSyncAdapter extends AbstractOwnCloudSyncAdapter {
      * @param dirRemotePath     Remote path of a folder that was just synchronized (with or without success)
      */
     private void sendStickyBroadcast(boolean inProgress, String dirRemotePath, RemoteOperationResult result) {
-        Intent i = new Intent(FileSyncService.SYNC_MESSAGE);
-        i.putExtra(FileSyncService.IN_PROGRESS, inProgress);
-        i.putExtra(FileSyncService.ACCOUNT_NAME, getAccount().name);
+        Intent i = new Intent(OCDataSyncService.SYNC_MESSAGE);
+        i.putExtra(OCDataSyncService.IN_PROGRESS, inProgress);
+        i.putExtra(OCDataSyncService.ACCOUNT_NAME, getAccount().name);
         if (dirRemotePath != null) {
-            i.putExtra(FileSyncService.SYNC_FOLDER_REMOTE_PATH, dirRemotePath);
+            i.putExtra(OCDataSyncService.SYNC_FOLDER_REMOTE_PATH, dirRemotePath);
         }
         if (result != null) {
-            i.putExtra(FileSyncService.SYNC_RESULT, result);
+            i.putExtra(OCDataSyncService.SYNC_RESULT, result);
         }
         getContext().sendStickyBroadcast(i);
     }
@@ -404,6 +430,51 @@ public class FileSyncAdapter extends AbstractOwnCloudSyncAdapter {
         ((NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE)).notify(R.string.sync_foreign_files_forgotten_ticker, notification);
         
     }
+    /**
+     * This method makes call to the server and updates Shared Files
+     */
+    private void fetchSharedWithMeData(){
+        //get data from the server and update table
+        SynchronizeSharedWithMeData operation = new SynchronizeSharedWithMeData(getContext());
+        new Thread(operation).start();
+        //status check is in the operation
+    }
     
-    
+    /**
+     * This method makes call to the server and updates Shared Files
+     */
+    private void fetchSharedByMeData(){
+        //get data from the server and update table
+        SynchronizeSharedByMeData operation = new SynchronizeSharedByMeData(getContext());
+        new Thread(operation).start();
+        //status check is in the operation
+    }
+    /**
+     * This method makes call to the server and updates Shared Files
+     */
+    private void fetchServerIds(){
+        //get data from the server and update table
+        SynchronizeServerIds operation = new SynchronizeServerIds(getContext());
+        new Thread(operation).start();
+        //status check is in the operation
+    }
+    /**
+     * This method makes call to the server and updates Groups
+     */
+    private void fetchGroups(){
+        //get data from the server and update table
+        SynchronizeGroups operation = new SynchronizeGroups(getContext());
+        new Thread(operation).start();
+        //status check is in the operation
+    }
+    private void fetchFriends(){
+        //get data from the server and update table
+        SynchronizeFriends operation = new SynchronizeFriends(getContext());
+        new Thread(operation).start();
+        //status check is in the operation
+    }
+    private void fetchKeepInSync(){
+        SynchronizeKeepInSyncFiles operation = new SynchronizeKeepInSyncFiles(getContext());
+        new Thread(operation).start();
+    }
 }

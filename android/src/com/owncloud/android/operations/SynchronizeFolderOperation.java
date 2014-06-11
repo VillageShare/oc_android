@@ -142,7 +142,7 @@ public class SynchronizeFolderOperation extends RemoteOperation {
             if (isMultiStatus(status)) { 
                 MultiStatus resp = query.getResponseBodyAsMultiStatus();
             
-                // synchronize properties of the parent folder, if necessary
+               // synchronize properties of the parent folder, if necessary
                 if (mParentId == DataStorageManager.ROOT_PARENT_ID) {
                     WebdavEntry we = new WebdavEntry(resp.getResponses()[0], client.getBaseUri().getPath());
                     OCFile parent = fillOCFile(we);
@@ -165,7 +165,7 @@ public class SynchronizeFolderOperation extends RemoteOperation {
                         file.setKeepInSync(oldFile.keepInSync());
                         file.setLastSyncDateForData(oldFile.getLastSyncDateForData());
                         file.setModificationTimestampAtLastSyncForData(oldFile.getModificationTimestampAtLastSyncForData());    // must be kept unchanged when the file contents are not updated
-                        checkAndFixForeignStoragePath(oldFile);
+                        checkAndFixForeignStoragePath(oldFile); //????
                         file.setStoragePath(oldFile.getStoragePath());
                     }
 
@@ -195,9 +195,12 @@ public class SynchronizeFolderOperation extends RemoteOperation {
                 }
                                 
                 // save updated contents in local database; all at once, trying to get a best performance in database update (not a big deal, indeed)
+                // thumbnail
                 mStorageManager.saveFiles(updatedFiles);
                 
                 // request for the synchronization of files AFTER saving last properties
+                //Will be done is a separate thread.
+                /*
                 SynchronizeFileOperation op = null;
                 RemoteOperationResult contentsResult = null;
                 for (int i=0; i < filesToSyncContents.size(); i++) {
@@ -216,7 +219,7 @@ public class SynchronizeFolderOperation extends RemoteOperation {
                         }
                     }   // won't let these fails break the synchronization process
                 }
-
+                */
                     
                 // removal of obsolete files
                 mChildren = mStorageManager.getDirectoryContent(mStorageManager.getFileById(mParentId));

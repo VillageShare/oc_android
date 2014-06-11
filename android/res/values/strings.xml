@@ -333,4 +333,7 @@
         <item> &quot;CSIR&quot; </item>
     </string-array>
     <string name="server_url">http://128.111.52.157/owncloud</string>
+    <string name="actionbar_quit">Quit</string>
+    <string name="share_with_friends">Enter friends you want to share with</string>
+    <string name="share_with_groups">Enter groups you want to share with</string>
 </resources>

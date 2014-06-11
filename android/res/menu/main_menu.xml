@@ -23,6 +23,7 @@
     <item android:id="@+id/action_create_dir" 		android:title="@string/actionbar_mkdir" 	android:icon="@drawable/ic_action_create_dir"			android:orderInCategory="2" />
     <item android:id="@+id/action_upload" 			android:title="@string/actionbar_upload" 	android:icon="@drawable/ic_action_upload" 				android:orderInCategory="2" />
     <item android:id="@+id/action_settings" 		android:title="@string/actionbar_settings" 	android:icon="@android:drawable/ic_menu_preferences" 	android:orderInCategory="2" />
+    <item android:id="@+id/action_quit" 			android:title="@string/actionbar_quit"	 	android:icon="@android:drawable/ic_menu_close_clear_cancel" 	android:orderInCategory="2" />
     <item android:id="@+id/action_friend"           android:title="@string/about_connect_friends"          android:orderInCategory="2" android:showAsAction="ifRoom|withText"/>
     <item android:id="@+id/action_create_file" 		android:title="@string/actionbar_create" 	android:icon="@android:drawable/ic_menu_preferences" 	android:orderInCategory="2" />
     <item android:id="@+id/action_group"            android:title="Groups"          android:orderInCategory="2" android:showAsAction="ifRoom|withText"/>

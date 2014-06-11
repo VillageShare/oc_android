@@ -21,6 +21,7 @@ package com.owncloud.android.datamodel;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
@@ -29,6 +30,7 @@ import com.owncloud.android.DisplayUtils;
 import com.owncloud.android.Log_OC;
 import com.owncloud.android.db.ProviderMeta;
 import com.owncloud.android.db.ProviderMeta.ProviderTableMeta;
+import com.owncloud.android.operations.UpdateKeepInSyncFile;
 import com.owncloud.android.utils.FileStorageUtils;
 
 import android.accounts.Account;
@@ -42,7 +44,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.RemoteException;
 
-public class FileDataStorageManager implements DataStorageManager {
+public class OCDataStorageManager implements DataStorageManager {
 
     private ContentResolver mContentResolver;
     private ContentProviderClient mContentProvider;
@@ -50,28 +52,19 @@ public class FileDataStorageManager implements DataStorageManager {
 
     private static String TAG = "FileDataStorageManager";
 
-    public FileDataStorageManager(Account account, ContentResolver cr) {
+    public OCDataStorageManager(Account account, ContentResolver cr) {
         mContentProvider = null;
         mContentResolver = cr;
         mAccount = account;
     }
 
-    public FileDataStorageManager(Account account, ContentProviderClient cp) {
+    public OCDataStorageManager(Account account, ContentProviderClient cp) {
         mContentProvider = cp;
         mContentResolver = null;
         mAccount = account;
     }
 
-    public void updateKeepInSync(OCFile file, boolean keepInSync){
-        ContentValues cv = new ContentValues();
-        cv.put(ProviderTableMeta.FILE_KEEP_IN_SYNC,keepInSync? 1 : 0);
-            
-        if (getContentResolver() != null) {
-            getContentResolver().update(ProviderTableMeta.CONTENT_URI, cv,
-                    ProviderTableMeta._ID + "=?",
-                    new String[] { String.valueOf(file.getFileId()) });
-        }
-    }
+    
     
     @Override
     public OCFile getFileByPath(String path) {
@@ -162,7 +155,7 @@ public class FileDataStorageManager implements DataStorageManager {
 
             overriden = true;
             if (getContentResolver() != null) {
-                getContentResolver().update(ProviderTableMeta.CONTENT_URI, cv,
+                getContentResolver().update(ProviderTableMeta.CONTENT_URI, cv, //why content_uri??
                         ProviderTableMeta._ID + "=?",
                         new String[] { String.valueOf(file.getFileId()) });
             } else {
@@ -284,7 +277,7 @@ public class FileDataStorageManager implements DataStorageManager {
         ContentProviderResult[] results = null;
         try {
             if (getContentResolver() != null) {
-                results = getContentResolver().applyBatch(ProviderMeta.AUTHORITY_FILES, operations);
+                results = getContentResolver().applyBatch(ProviderMeta.AUTHORITY, operations);
 
             } else {
                 results = getContentProvider().applyBatch(operations);
@@ -482,6 +475,8 @@ public class FileDataStorageManager implements DataStorageManager {
                     getColumnIndex(ProviderTableMeta.FILE_LAST_SYNC_DATE_FOR_DATA)));
             file.setKeepInSync(c.getInt(
                     c.getColumnIndex(ProviderTableMeta.FILE_KEEP_IN_SYNC)) == 1 ? true : false);
+            file.setFileServerId(c.getLong(c.
+                    getColumnIndex(ProviderTableMeta.FILE_SERVER_ID)));
         }
         return file;
     }
@@ -604,7 +599,7 @@ public class FileDataStorageManager implements DataStorageManager {
             /// 3. apply updates in batch
             try {
                 if (getContentResolver() != null) {
-                    getContentResolver().applyBatch(ProviderMeta.AUTHORITY_FILES, operations);
+                    getContentResolver().applyBatch(ProviderMeta.AUTHORITY, operations);
 
                 } else {
                     getContentProvider().applyBatch(operations);
@@ -698,4 +693,553 @@ public class FileDataStorageManager implements DataStorageManager {
         
     }
     
+    /**
+     * Method updated SHARED WITH ME table by adding/removing files 
+     * that were shared with the user 
+     * @param newFiles
+     */
+    
+    public void updateSharedWithMeFiles(HashMap<Integer, String[]> newFiles){
+        //get the client table array
+        HashMap<Integer, String[]> oldFiles = new HashMap<Integer, String[]>();
+        // files that would be deleted from the table
+        ArrayList<ContentProviderOperation> toDelete = new ArrayList<ContentProviderOperation>();
+        // files that would be added to the table
+        ArrayList<ContentProviderOperation> toAdd = new ArrayList<ContentProviderOperation>();
+        
+        //Log_OC.d(TAG, "updating shared with me files");
+        Cursor c = null;
+        
+        //initialize oldFiles from the table
+        //query all the content
+        try { 
+            if(getContentResolver()!= null){
+            c = getContentResolver().query(ProviderTableMeta.CONTENT_URI_SHARED_WITH_ME, null, //table, all columns 
+                    null ,null, null); //all rows, default sort order
+            } else {
+                c = getContentProvider().query(ProviderTableMeta.CONTENT_URI_SHARED_WITH_ME, null, //table, all columns 
+                        null ,null, null); //all rows, default sort order
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log_OC.e(TAG, e.getMessage());
+            return;
+        }
+        if (c.moveToFirst()) { //nonempty query result
+            do {
+                oldFiles.put(c.getInt(c.getColumnIndex(ProviderTableMeta.SHAREDWM_FILE_SERVER_ID)), //key
+                        new String[] {c.getString(c.getColumnIndex(ProviderTableMeta.SHAREDWM_FILE_NAME)), //value
+                                c.getString(c.getColumnIndex(ProviderTableMeta.SHAREDWM_OWNER_LOCATION)) //value
+                        });
+  
+            } while (c.moveToNext());
+        }
+        c.close();
+        
+        //compare the table content
+        //for every entry in the client(oldFiles) array
+        for (HashMap.Entry<Integer, String[]> entry : oldFiles.entrySet()) {
+          //if it is in the server map, remove it from the server map
+           if(newFiles.containsKey(entry.getKey())){    
+               newFiles.remove(entry.getKey());
+           } else {
+            //if it is not present in the new server list, remove it from the client list
+            //Delete by ID
+            toDelete.add(ContentProviderOperation.newDelete(ProviderTableMeta.CONTENT_URI_SHARED_WITH_ME).
+                            withSelection(ProviderTableMeta.SHAREDWM_FILE_SERVER_ID + " = ?", 
+                            new String[] { String.valueOf(entry.getKey())}  ).build());
+           }
+        }
+        
+        //now all the files we want to add are in the newFiles (the ones that were left)
+        //batching operations
+        for (HashMap.Entry<Integer, String[]> entry : newFiles.entrySet()) {
+            
+            ContentValues cv = new ContentValues();
+            cv.put(ProviderTableMeta.SHAREDWM_FILE_SERVER_ID, entry.getKey());
+            cv.put(ProviderTableMeta.SHAREDWM_FILE_NAME, entry.getValue()[0]);
+            cv.put(ProviderTableMeta.SHAREDWM_OWNER_LOCATION, entry.getValue()[1]);
+            toAdd.add(ContentProviderOperation.newInsert(ProviderTableMeta.CONTENT_URI_SHARED_WITH_ME).withValues(cv).build());
+        }
+        //Run operations in batch
+        ContentProviderResult[] results = null;
+        try {  
+                if(getContentResolver()!= null){
+                    results = getContentResolver().applyBatch(ProviderMeta.AUTHORITY, toAdd);
+                    Log_OC.d(TAG, results.toString());
+                    results = getContentResolver().applyBatch(ProviderMeta.AUTHORITY, toDelete);
+                    Log_OC.d(TAG, results.toString());
+                } else {
+                    results = getContentProvider().applyBatch(toAdd);
+                    Log_OC.d(TAG, results.toString());
+                    results = getContentProvider().applyBatch(toDelete);
+                    Log_OC.d(TAG, results.toString());
+                }
+                //TODO check results
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+        
+     }
+    
+    
+    
+    /**
+     * Method updated SHARED By ME table by adding/removing files 
+     * that were shared with the user 
+     * @param newFiles
+     */
+    
+    public void updateSharedByMeFiles(HashMap<Integer, String> newFiles){
+        //get the client table array
+        HashMap<Integer, String> oldFiles = new HashMap<Integer, String>();
+        // files that would be deleted from the table
+        ArrayList<ContentProviderOperation> toDelete = new ArrayList<ContentProviderOperation>();
+        // files that would be added to the table
+        ArrayList<ContentProviderOperation> toAdd = new ArrayList<ContentProviderOperation>();
+        
+        //Log_OC.d(TAG, "updating shared by me files");
+        Cursor c = null;
+        
+        //initialize oldFiles from the table
+        //query all the content
+        try { 
+            if(getContentResolver()!= null){
+            c = getContentResolver().query(ProviderTableMeta.CONTENT_URI_SHARED_BY_ME, null, //table, all columns 
+                    null ,null, null); //all rows, default sort order
+            } else {
+                c = getContentProvider().query(ProviderTableMeta.CONTENT_URI_SHARED_BY_ME, null, //table, all columns 
+                        null ,null, null); //all rows, default sort order
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log_OC.e(TAG, e.getMessage());
+            return;
+        }
+        if (c.moveToFirst()) { //nonempty query result
+            do {
+                oldFiles.put(c.getInt(c.getColumnIndex(ProviderTableMeta.SHAREDBM_FILE_SERVER_ID)), //key
+                                c.getString(c.getColumnIndex(ProviderTableMeta.SHAREDBM_USER_LOCATION)) //value
+                        );
+  
+            } while (c.moveToNext());
+        }
+        c.close();
+        
+        //compare the table content
+        //for every entry in the client(oldFiles) array
+        for (HashMap.Entry<Integer, String> entry : oldFiles.entrySet()) {
+          //if it is in the server map, remove it from the server map
+           if(newFiles.containsKey(entry.getKey())){    
+               newFiles.remove(entry.getKey());
+           } else {
+            //if it is not present in the new server list, remove it from the client list
+            //Delete by ID
+            toDelete.add(ContentProviderOperation.newDelete(ProviderTableMeta.CONTENT_URI_SHARED_BY_ME).
+                            withSelection(ProviderTableMeta.SHAREDBM_FILE_SERVER_ID + " = ?", 
+                            new String[] { String.valueOf(entry.getKey())}  ).build());
+           }
+        }
+        
+        //now all the files we want to add are in the newFiles (the ones that were left)
+        //batching operations
+        for (HashMap.Entry<Integer, String> entry : newFiles.entrySet()) {
+            
+            ContentValues cv = new ContentValues();
+            cv.put(ProviderTableMeta.SHAREDBM_FILE_SERVER_ID, entry.getKey());
+            cv.put(ProviderTableMeta.SHAREDBM_USER_LOCATION, entry.getValue());
+            toAdd.add(ContentProviderOperation.newInsert(ProviderTableMeta.CONTENT_URI_SHARED_BY_ME).withValues(cv).build());
+        }
+        //Run operations in batch
+        ContentProviderResult[] results = null;
+        try {  
+                if(getContentResolver()!= null){
+                    results = getContentResolver().applyBatch(ProviderMeta.AUTHORITY, toAdd);
+                    Log_OC.d(TAG, results.toString());
+                    results = getContentResolver().applyBatch(ProviderMeta.AUTHORITY, toDelete);
+                    Log_OC.d(TAG, results.toString());
+                } else {
+                    results = getContentProvider().applyBatch(toAdd);
+                    Log_OC.d(TAG, results.toString());
+                    results = getContentProvider().applyBatch(toDelete);
+                    Log_OC.d(TAG, results.toString());
+                }
+                //TODO check results
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+        
+     }
+    
+    
+    public void updateGroups(HashMap<String,Integer> newGroups){
+        HashMap<String,Integer> oldGroups = new HashMap<String,Integer>();
+        // groups that would be deleted from the table
+        ArrayList<ContentProviderOperation> toDelete = new ArrayList<ContentProviderOperation>();
+        // groups that would be added to the table
+        ArrayList<ContentProviderOperation> toAdd = new ArrayList<ContentProviderOperation>();
+        //query old groups
+        
+        //Log_OC.d(TAG, "updating groups files");
+        Cursor c = null;
+        
+        try { 
+            if(getContentResolver()!= null){
+            c = getContentResolver().query(ProviderTableMeta.CONTENT_URI_GROUPS, null, //table, all columns 
+                    null ,null, null); //all rows, default sort order
+            } else {
+                c = getContentProvider().query(ProviderTableMeta.CONTENT_URI_GROUPS, null, //table, all columns 
+                        null ,null, null); //all rows, default sort order
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log_OC.e(TAG, e.getMessage());
+            return;
+        }
+        if (c.moveToFirst()) { //nonempty query result
+            do {
+                oldGroups.put(c.getString(c.getColumnIndex(ProviderTableMeta.GROUP)), //key
+                        c.getInt(c.getColumnIndex(ProviderTableMeta.GROUP_ADMIN)));
+  
+            } while (c.moveToNext());
+        }
+        c.close();
+        
+      //compare the table content
+      //for every entry in the client(oldGroups) array
+      for (HashMap.Entry<String,Integer> entry : oldGroups.entrySet()) {
+          //if it is in the server map, remove it from the server map
+           if(newGroups.containsKey(entry.getKey())){    
+               newGroups.remove(entry.getKey());
+           } else {
+            //if it is not present in the new server list, remove it from the client list
+            //Delete by Group name
+            toDelete.add(ContentProviderOperation.newDelete(ProviderTableMeta.CONTENT_URI_GROUPS).
+                            withSelection(ProviderTableMeta.GROUP + " = ?",  //delete entry by group name
+                            new String[] { entry.getKey() }).build());
+           }
+        }
+      //now all the groups we want to add are in the newGroups (the ones that were left)
+      //batching operations
+      for (HashMap.Entry<String, Integer> entry : newGroups.entrySet()) {
+          
+          ContentValues cv = new ContentValues();
+          cv.put(ProviderTableMeta.GROUP, entry.getKey());
+          cv.put(ProviderTableMeta.GROUP_ADMIN, entry.getValue());
+          toAdd.add(ContentProviderOperation.newInsert(ProviderTableMeta.CONTENT_URI_GROUPS).withValues(cv).build());
+      }
+    //Run operations in batch
+      ContentProviderResult[] results = null;
+      try {  
+              if(getContentResolver()!= null){
+                  results = getContentResolver().applyBatch(ProviderMeta.AUTHORITY, toAdd);
+                  //Log_OC.d(TAG, results.toString());
+                  results = getContentResolver().applyBatch(ProviderMeta.AUTHORITY, toDelete);
+                  //Log_OC.d(TAG, results.toString());
+              } else {
+                  results = getContentProvider().applyBatch(toAdd);
+                  //Log_OC.d(TAG, results.toString());
+                  results = getContentProvider().applyBatch(toDelete);
+                  //Log_OC.d(TAG, results.toString());
+              }
+              //TODO check results
+      } catch (Exception e){
+          e.printStackTrace();
+      } 
+    }
+    
+    /**
+     * Updates ServerID column in the FILE table.
+     * At point files tables are synced with onPerformSync()
+     * so we are just adding the ids for the client file table,
+     * assuming that server table is identical;
+     * @param newServerIds fetched from the server
+     */
+    
+    public void updateServerIds(HashMap<Integer, String> newServerIds){
+        
+        ArrayList<ContentProviderOperation> toUpdate = new ArrayList<ContentProviderOperation>();
+        //create a batch of operations for updates.
+        for (HashMap.Entry<Integer, String> entry : newServerIds.entrySet()) {          
+            ContentValues cv = new ContentValues();
+            cv.put(ProviderTableMeta.FILE_SERVER_ID, entry.getKey());
+            toUpdate.add(ContentProviderOperation.newUpdate(ProviderTableMeta.CONTENT_URI).
+                    withValues(cv).
+                    withSelection(ProviderTableMeta.FILE_PATH + "=?", 
+                            new String[] { entry.getValue()}).
+                    build());
+        }
+        
+        try { 
+            ContentProviderResult[] results = null;
+            if(getContentResolver()!= null){
+                results = getContentResolver().applyBatch(ProviderMeta.AUTHORITY, toUpdate);
+            } else {
+                results = getContentProvider().applyBatch(toUpdate);
+            }
+            //TODO check results
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log_OC.e(TAG, e.getMessage());
+            return;
+        }
+        
+    }      
+    public void updateKeepInSyncFiles(List<Integer> newFiles){
+            
+            ArrayList<ContentProviderOperation> toUpdate = new ArrayList<ContentProviderOperation>();
+            //create a batch of operations for updates.
+            for (Integer entry : newFiles) {          
+                ContentValues cv = new ContentValues();
+                cv.put(ProviderTableMeta.FILE_KEEP_IN_SYNC, 1);
+                toUpdate.add(ContentProviderOperation.newUpdate(ProviderTableMeta.CONTENT_URI).
+                        withValues(cv).
+                        withSelection(ProviderTableMeta.FILE_SERVER_ID + "=?", 
+                                new String[] { String.valueOf(entry)}).
+                        build());
+            }           
+            try { 
+                ContentProviderResult[] results = null;
+                if(getContentResolver()!= null){
+                    results = getContentResolver().applyBatch(ProviderMeta.AUTHORITY, toUpdate);
+                } else {
+                    results = getContentProvider().applyBatch(toUpdate);
+                }
+                //TODO check results
+            } catch (Exception e) {
+                e.printStackTrace();
+                Log_OC.e(TAG, e.getMessage());
+                return;
+            }
+        
+    }
+    public void updateFriends(ArrayList<String> newFriends){
+        ArrayList<String> oldFriends = new ArrayList<String>();
+        
+        // groups that would be deleted from the table
+        ArrayList<ContentProviderOperation> toDelete = new ArrayList<ContentProviderOperation>();
+        // groups that would be added to the table
+        ArrayList<ContentProviderOperation> toAdd = new ArrayList<ContentProviderOperation>();
+        //query old groups
+        
+        //Log_OC.d(TAG, "updating groups files");
+        Cursor c = null;
+        
+        try { 
+            if(getContentResolver()!= null){
+            c = getContentResolver().query(ProviderTableMeta.CONTENT_URI_FRIENDS, null, //table, all columns 
+                    null ,null, null); //all rows, default sort order
+            } else {
+                c = getContentProvider().query(ProviderTableMeta.CONTENT_URI_FRIENDS, null, //table, all columns 
+                        null ,null, null); //all rows, default sort order
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log_OC.e(TAG, e.getMessage());
+            return;
+        }
+        if (c.moveToFirst()) { //nonempty query result
+            do {
+                oldFriends.add(c.getString(c.getColumnIndex(ProviderTableMeta.FRIEND)));
+            } while (c.moveToNext());
+        }
+        c.close();
+        
+      //compare the table content
+      //for every entry in the client(oldFriends) array
+      for (String entry : oldFriends) {
+          //if it is in the server map, remove it from the server map
+           if(newFriends.contains(entry)){    
+               newFriends.remove(entry);
+           } else {
+            //if it is not present in the new server list, remove it from the client list
+            //Delete by Group name
+            toDelete.add(ContentProviderOperation.newDelete(ProviderTableMeta.CONTENT_URI_FRIENDS).
+                            withSelection(ProviderTableMeta.FRIEND + " = ?",  //delete entry by group name
+                            new String[] { entry }).build());
+           }
+        }
+      
+      //now all the groups we want to add are in the newGroups (the ones that were left)
+      //batching operations
+      for (String entry : newFriends) {
+          
+          ContentValues cv = new ContentValues();
+          cv.put(ProviderTableMeta.FRIEND, entry);
+          toAdd.add(ContentProviderOperation.newInsert(ProviderTableMeta.CONTENT_URI_FRIENDS).withValues(cv).build());
+      }
+    //Run operations in batch
+      ContentProviderResult[] results = null;
+      try {  
+              if(getContentResolver()!= null){
+                  results = getContentResolver().applyBatch(ProviderMeta.AUTHORITY, toAdd);
+                  //Log_OC.d(TAG, results.toString());
+                  results = getContentResolver().applyBatch(ProviderMeta.AUTHORITY, toDelete);
+                  //Log_OC.d(TAG, results.toString());
+              } else {
+                  results = getContentProvider().applyBatch(toAdd);
+                  //Log_OC.d(TAG, results.toString());
+                  results = getContentProvider().applyBatch(toDelete);
+                  //Log_OC.d(TAG, results.toString());
+              }
+              //TODO check results
+      } catch (Exception e){
+          e.printStackTrace();
+      } 
+    }
+    
+    /**
+     * Helper method for debugging database
+     * @param uri
+     */
+    
+    public void printTable(Uri uri){
+        Cursor c = null;
+        try{
+            if(getContentResolver()!= null){
+                c = getContentResolver().query(uri, null, null, null, null);
+            } else {
+                c = getContentProvider().query(uri, null, null, null, null);
+            }
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+        Log_OC.d(TAG, "Printing table " + uri);
+        String row = "";
+        if(c != null && c.moveToFirst()){ //nonempty
+            for(int i = 0; i < c.getColumnCount(); i++){
+                row = row + c.getColumnName(i) + " ";
+              }
+            Log_OC.d(TAG, row);
+            
+         do{   
+             row = "";
+             for(int i = 0; i < c.getColumnCount(); i++){
+               row = row + c.getString(i) + " ";
+             }
+             Log_OC.d(TAG, row);
+         }while(c.moveToNext());
+        }
+        c.close();
+        
+    }
+    public List<String> getFriendsList(){
+        List<String> friends = new ArrayList<String>();
+        
+        Cursor c = null;
+        try{
+            if(getContentResolver()!= null){
+                c = getContentResolver().query(ProviderTableMeta.CONTENT_URI_FRIENDS, null, null, null, null);
+            } else {
+                c = getContentProvider().query(ProviderTableMeta.CONTENT_URI_FRIENDS, null, null, null, null);
+            }
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+        if(c != null && c.moveToFirst()){ //nonempty          
+         do{   
+             friends.add(c.getString(c.getColumnIndex(ProviderTableMeta.FRIEND)));
+         }while(c.moveToNext());
+        }
+       c.close();
+       return friends;
+    }
+    
+    public List<String> getGroupsList(){
+        List<String> groups = new ArrayList<String>();
+        
+        Cursor c = null;
+        try{
+            if(getContentResolver()!= null){
+                c = getContentResolver().query(ProviderTableMeta.CONTENT_URI_GROUPS, null, null, null, null);
+            } else {
+                c = getContentProvider().query(ProviderTableMeta.CONTENT_URI_GROUPS, null, null, null, null);
+            }
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+        if(c != null && c.moveToFirst()){ //nonempty          
+         do{   
+             groups.add(c.getString(c.getColumnIndex(ProviderTableMeta.GROUP)));
+         }while(c.moveToNext());
+        }
+       c.close();
+       return groups;
+    }
+    
+    public List<String> whomIveSharedFileWith(long serverId){
+        List<String> shared = new ArrayList<String>();
+        
+        Cursor c = null;
+        try{
+            if(getContentResolver()!= null){
+                c = getContentResolver().query(ProviderTableMeta.CONTENT_URI_SHARED_BY_ME, null,
+                        ProviderTableMeta.SHAREDBM_FILE_SERVER_ID + "=?" ,
+                        new String[] {String.valueOf(serverId)}, null);
+            } else {
+                c = getContentProvider().query(ProviderTableMeta.CONTENT_URI_SHARED_BY_ME, null,
+                        ProviderTableMeta.SHAREDBM_FILE_SERVER_ID + "=?" ,
+                        new String[] {String.valueOf(serverId)}, null);
+            }
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+        if(c != null && c.moveToFirst()){ //nonempty          
+         do{   
+             shared.add(c.getString(c.getColumnIndex(ProviderTableMeta.SHAREDBM_USER_LOCATION)));
+         }while(c.moveToNext());
+        }
+        c.close();
+       return shared;
+    }
+    
+    public String wasFileSharedWithMe(long serverId){
+        String owner = null;
+        Cursor c = null;
+        try{
+            if(getContentResolver()!= null){
+                c = getContentResolver().query(ProviderTableMeta.CONTENT_URI_SHARED_WITH_ME, null,
+                        ProviderTableMeta.SHAREDWM_FILE_SERVER_ID + "=?" ,
+                        new String[] {String.valueOf(serverId)}, null);
+            } else {
+                c = getContentProvider().query(ProviderTableMeta.CONTENT_URI_SHARED_WITH_ME, null,
+                        ProviderTableMeta.SHAREDWM_FILE_SERVER_ID + "=?" ,
+                        new String[] {String.valueOf(serverId)}, null);
+            }
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+        if(c != null && c.moveToFirst()){
+            owner = c.getString(c.getColumnIndex(ProviderTableMeta.SHAREDWM_OWNER_LOCATION));
+        }
+        c.close();
+        return owner;
+    }
+    
+    /**
+     * Change keep in sync state in table record for file
+     * @param file
+     * @param keepInSync
+     */
+    public void setKeepInSync(OCFile file, boolean keepInSync){
+        ContentValues cv = new ContentValues();
+        cv.put(ProviderTableMeta.FILE_KEEP_IN_SYNC,keepInSync? 1 : 0);
+        try{    
+            if (getContentResolver() != null) {
+                getContentResolver().update(ProviderTableMeta.CONTENT_URI, cv,
+                        ProviderTableMeta._ID + "=?",
+                        new String[] { String.valueOf(file.getFileId()) });
+            } else {
+                getContentProvider().update(ProviderTableMeta.CONTENT_URI, cv,
+                        ProviderTableMeta._ID + "=?",
+                        new String[] { String.valueOf(file.getFileId()) });
+            }
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+    }
 }

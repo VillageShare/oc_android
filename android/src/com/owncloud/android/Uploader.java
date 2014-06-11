@@ -56,7 +56,7 @@ import android.widget.Toast;
 
 import com.owncloud.android.authentication.AccountAuthenticator;
 import com.owncloud.android.datamodel.DataStorageManager;
-import com.owncloud.android.datamodel.FileDataStorageManager;
+import com.owncloud.android.datamodel.OCDataStorageManager;
 import com.owncloud.android.datamodel.OCFile;
 import com.owncloud.android.files.services.FileUploader;
 
@@ -104,7 +104,7 @@ public class Uploader extends ListActivity implements OnItemClickListener, andro
                 showDialog(DIALOG_MULTIPLE_ACCOUNT);
             } else {
                 mAccount = accounts[0];
-                mStorageManager = new FileDataStorageManager(mAccount, getContentResolver());
+                mStorageManager = new OCDataStorageManager(mAccount, getContentResolver());
                 populateDirectoryList();
             }
         } else {
@@ -167,7 +167,7 @@ public class Uploader extends ListActivity implements OnItemClickListener, andro
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     mAccount = mAccountManager.getAccountsByType(AccountAuthenticator.ACCOUNT_TYPE)[which];
-                    mStorageManager = new FileDataStorageManager(mAccount, getContentResolver());
+                    mStorageManager = new OCDataStorageManager(mAccount, getContentResolver());
                     populateDirectoryList();
                 }
             });

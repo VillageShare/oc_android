@@ -46,7 +46,7 @@ import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
 import com.owncloud.android.DisplayUtils;
 import com.owncloud.android.Log_OC;
-import com.owncloud.android.datamodel.FileDataStorageManager;
+import com.owncloud.android.datamodel.OCDataStorageManager;
 import com.owncloud.android.datamodel.OCFile;
 import com.owncloud.android.files.services.FileObserverService;
 import com.owncloud.android.files.services.FileUploader;
@@ -87,7 +87,7 @@ public class FileDetailFragment extends FileFragment
     private int mLayout;
     private View mView;
     private Account mAccount;
-    private FileDataStorageManager mStorageManager;
+    private OCDataStorageManager mStorageManager;
     
     private UploadFinishReceiver mUploadFinishReceiver;
     public ProgressListener mProgressListener;
@@ -189,7 +189,7 @@ public class FileDetailFragment extends FileFragment
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         if (mAccount != null) {
-            mStorageManager = new FileDataStorageManager(mAccount, getActivity().getApplicationContext().getContentResolver());
+            mStorageManager = new OCDataStorageManager(mAccount, getActivity().getApplicationContext().getContentResolver());
         }
     }
         
@@ -516,7 +516,7 @@ public class FileDetailFragment extends FileFragment
                 mStorageManager == null || 
                 (mAccount != null && !mAccount.equals(ocAccount))
            )) {
-            mStorageManager = new FileDataStorageManager(ocAccount, getActivity().getApplicationContext().getContentResolver());
+            mStorageManager = new OCDataStorageManager(ocAccount, getActivity().getApplicationContext().getContentResolver());
         }
         mAccount = ocAccount;
         updateFileDetails(false, false);
@@ -762,7 +762,7 @@ public class FileDetailFragment extends FileFragment
             mLastRemoteOperation = new RenameFileOperation( getFile(), 
                                                             mAccount, 
                                                             newFilename, 
-                                                            new FileDataStorageManager(mAccount, getActivity().getContentResolver()));
+                                                            new OCDataStorageManager(mAccount, getActivity().getContentResolver()));
             mLastRemoteOperation.execute(mAccount, getSherlockActivity(), this, mHandler, getSherlockActivity());
             boolean inDisplayActivity = getActivity() instanceof FileDisplayActivity;
             getActivity().showDialog(FileDisplayActivity.DIALOG_SHORT_WAIT);

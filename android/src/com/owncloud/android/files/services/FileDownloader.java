@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentMap;
 
 import com.owncloud.android.authentication.AccountAuthenticator;
 import com.owncloud.android.authentication.AuthenticatorActivity;
-import com.owncloud.android.datamodel.FileDataStorageManager;
+import com.owncloud.android.datamodel.OCDataStorageManager;
 import com.owncloud.android.datamodel.OCFile;
 import eu.alefzero.webdav.OnDatatransferProgressListener;
 
@@ -82,7 +82,7 @@ public class FileDownloader extends Service implements OnDatatransferProgressLis
     private IBinder mBinder;
     private WebdavClient mDownloadClient = null;
     private Account mLastAccount = null;
-    private FileDataStorageManager mStorageManager;
+    private OCDataStorageManager mStorageManager;
     
     private ConcurrentMap<String, DownloadFileOperation> mPendingDownloads = new ConcurrentHashMap<String, DownloadFileOperation>();
     private DownloadFileOperation mCurrentDownload = null;
@@ -343,7 +343,7 @@ public class FileDownloader extends Service implements OnDatatransferProgressLis
                 /// prepare client object to send the request to the ownCloud server
                 if (mDownloadClient == null || !mLastAccount.equals(mCurrentDownload.getAccount())) {
                     mLastAccount = mCurrentDownload.getAccount();
-                    mStorageManager = new FileDataStorageManager(mLastAccount, getContentResolver());
+                    mStorageManager = new OCDataStorageManager(mLastAccount, getContentResolver());
                     mDownloadClient = OwnCloudClientUtils.createOwnCloudClient(mLastAccount, getApplicationContext());
                 }
 

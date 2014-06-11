@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.owncloud.android.Log_OC;
-import com.owncloud.android.datamodel.FileDataStorageManager;
+import com.owncloud.android.datamodel.OCDataStorageManager;
 import com.owncloud.android.datamodel.OCFile;
 import com.owncloud.android.db.ProviderMeta.ProviderTableMeta;
 import com.owncloud.android.files.OwnCloudFileObserver;
@@ -147,8 +147,8 @@ public class FileObserverService extends Service {
                 }
 
             if (account == null) continue;
-            FileDataStorageManager storage =                //??????
-                    new FileDataStorageManager(account, getContentResolver());
+            OCDataStorageManager storage =                //??????
+                    new OCDataStorageManager(account, getContentResolver());
             if (!storage.fileExists(c.getString(c.getColumnIndex(ProviderTableMeta.FILE_PATH))))
                 continue;
 

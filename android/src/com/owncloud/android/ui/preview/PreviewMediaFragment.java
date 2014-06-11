@@ -52,7 +52,7 @@ import android.widget.VideoView;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
-import com.owncloud.android.datamodel.FileDataStorageManager;
+import com.owncloud.android.datamodel.OCDataStorageManager;
 import com.owncloud.android.datamodel.OCFile;
 import com.owncloud.android.media.MediaControlView;
 import com.owncloud.android.media.MediaService;
@@ -90,7 +90,7 @@ public class PreviewMediaFragment extends FileFragment implements
 
     private View mView;
     private Account mAccount;
-    private FileDataStorageManager mStorageManager;
+    private OCDataStorageManager mStorageManager;
     private ImageView mImagePreview;
     private VideoView mVideoPreview;
     private int mSavedPlaybackPosition;
@@ -195,7 +195,7 @@ public class PreviewMediaFragment extends FileFragment implements
         super.onActivityCreated(savedInstanceState);
         Log_OC.e(TAG, "onActivityCreated");
 
-        mStorageManager = new FileDataStorageManager(mAccount, getActivity().getApplicationContext().getContentResolver());
+        mStorageManager = new OCDataStorageManager(mAccount, getActivity().getApplicationContext().getContentResolver());
         if (savedInstanceState != null) {
             setFile((OCFile)savedInstanceState.getParcelable(PreviewMediaFragment.EXTRA_FILE));
             mAccount = savedInstanceState.getParcelable(PreviewMediaFragment.EXTRA_ACCOUNT);

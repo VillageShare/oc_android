@@ -57,7 +57,7 @@ public class OCFile implements Parcelable, Comparable<OCFile> {
     private long mLastSyncDateForProperties;
     private long mLastSyncDateForData;
     private boolean mKeepInSync;
-
+    private long mServerId;
     private String mEtag;
 
     /**
@@ -95,7 +95,8 @@ public class OCFile implements Parcelable, Comparable<OCFile> {
         mNeedsUpdating = source.readInt() == 0;
         mKeepInSync = source.readInt() == 1;
         mLastSyncDateForProperties = source.readLong();
-        mLastSyncDateForData = source.readLong();       
+        mLastSyncDateForData = source.readLong(); 
+        mServerId = source.readLong();
 
     }
 
@@ -114,6 +115,7 @@ public class OCFile implements Parcelable, Comparable<OCFile> {
         dest.writeInt(mKeepInSync ? 1 : 0);
         dest.writeLong(mLastSyncDateForProperties);
         dest.writeLong(mLastSyncDateForData);
+        dest.writeLong(mServerId);
     }
     
     /**
@@ -124,7 +126,16 @@ public class OCFile implements Parcelable, Comparable<OCFile> {
     public long getFileId() {
         return mId;
     }
-
+    
+    /**
+     * Gets Server ID of the file
+     * 
+     * @return the file ID
+     */
+    
+    public long getFileServerId() {
+        return mServerId;
+    }
     /**
      * Returns the remote path of the file on ownCloud
      * 
@@ -321,6 +332,7 @@ public class OCFile implements Parcelable, Comparable<OCFile> {
         mLastSyncDateForData = 0;
         mKeepInSync = false;
         mNeedsUpdating = false;
+        mServerId = -1;
     }
 
     /**
@@ -331,7 +343,15 @@ public class OCFile implements Parcelable, Comparable<OCFile> {
     public void setFileId(long file_id) {
         mId = file_id;
     }
-
+    /**
+     * Sets the Server ID of the file
+     * 
+     * @param file_id to set
+     */
+    public void setFileServerId(long file_server_id) {
+        mServerId = file_server_id;   
+    }
+    
     /**
      * Sets the Mime-Type of the
      * 
@@ -441,8 +461,10 @@ public class OCFile implements Parcelable, Comparable<OCFile> {
 
     @Override
     public String toString() {
-        String asString = "[id=%s, name=%s, mime=%s, downloaded=%s, local=%s, remote=%s, parentId=%s, keepInSinc=%s]";
-        asString = String.format(asString, Long.valueOf(mId), getFileName(), mMimeType, isDown(), mLocalPath, mRemotePath, Long.valueOf(mParentId), Boolean.valueOf(mKeepInSync));
+        String asString = "[id=%s, name=%s, mime=%s, downloaded=%s, local=%s, remote=%s, parentId=%s, keepInSinc=%s,serverId = %s]";
+        asString = String.format(asString, Long.valueOf(mId), getFileName(),
+                mMimeType, isDown(), mLocalPath, mRemotePath, Long.valueOf(mParentId),
+                Boolean.valueOf(mKeepInSync), Long.valueOf(mServerId));
         return asString;
     }
 
