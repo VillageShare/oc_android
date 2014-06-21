@@ -85,7 +85,7 @@ public class ProviderMeta {
         public static final String SHAREDWM_OWNER_LOCATION = "sharedwm_file_owner_location";
         public static final String SHAREDWM_FILE_NAME = "sharedwm_file_name";
         public static final String SHAREDWM_FILE_SERVER_ID = "sharedwm_file_id";
-        //sort orded
+        //sort order
         public static final String SHAREDWM_FILE_DEFAULT_SORT_ORDER = SHAREDWM_FILE_NAME;
         
         
@@ -96,7 +96,7 @@ public class ProviderMeta {
         
         public static final String SHAREDBM_USER_LOCATION = "sharedbm_file_user_location";
         public static final String SHAREDBM_FILE_SERVER_ID = "sharedbm_file_id";
-        //sort orded
+        //sort order
         public static final String SHAREDBM_FILE_DEFAULT_SORT_ORDER = SHAREDBM_FILE_SERVER_ID;
         
         

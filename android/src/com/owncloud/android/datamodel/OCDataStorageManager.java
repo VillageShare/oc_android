@@ -1242,4 +1242,27 @@ public class OCDataStorageManager implements DataStorageManager {
             e.printStackTrace();
         }
     }
+    
+    public void setSharedFile(OCFile file, List<String>friends, List<String> groups){
+        ContentValues cv = new ContentValues();
+        for(String friend: friends){
+            cv.put(ProviderTableMeta.SHAREDBM_USER_LOCATION, friend);
+        }
+        for(String group: groups){
+            cv.put(ProviderTableMeta.SHAREDBM_USER_LOCATION, group);
+        }
+        try{    
+            if (getContentResolver() != null) {
+                getContentResolver().update(ProviderTableMeta.CONTENT_URI_SHARED_BY_ME, cv,
+                        ProviderTableMeta.SHAREDBM_FILE_SERVER_ID + "=?",
+                        new String[] { String.valueOf(file.getFileServerId()) });
+            } else {
+                getContentProvider().update(ProviderTableMeta.CONTENT_URI_SHARED_BY_ME, cv,
+                        ProviderTableMeta.SHAREDBM_FILE_SERVER_ID + "=?",
+                        new String[] { String.valueOf(file.getFileServerId()) });
+            }
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+    }
 }

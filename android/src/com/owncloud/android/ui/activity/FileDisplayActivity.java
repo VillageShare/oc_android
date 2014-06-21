@@ -215,9 +215,15 @@ public class FileDisplayActivity extends     FileActivity       //ShelokFragment
         /**
          * Authorization
          */
-        AccountUtils.getCurrentOwnCloudAccount(getBaseContext());
-        //once account is validates, synchronization starts
         
+        
+        if(AccountUtils.getCurrentOwnCloudAccount(getBaseContext())!= null) {//authorization happens here, if there is an account, it will log in otherwise it will authenticate you
+            
+            //Smruthis Initial page activity.
+            Intent intent = new Intent(this, InitialPageActivity.class);        
+            startActivity(intent);                                              
+        }
+             
         
         
         /** 
@@ -264,15 +270,7 @@ public class FileDisplayActivity extends     FileActivity       //ShelokFragment
         
        
        
-                /*
-        if(!= null) {//authorization happens here, if there is an account, it will log in otherwise it will authenticate you
-            
-            //Smruthis Initial page activity.
-            Intent intent = new Intent(this, InitialPageActivity.class);        
-            startActivity(intent);                                              
-        }
-             */
-       
+         
        /**
         * Bindings to transfer services
         */

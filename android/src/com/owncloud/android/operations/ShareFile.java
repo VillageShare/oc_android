@@ -18,10 +18,16 @@ public class ShareFile  extends RemoteDataOperation
     
     Handler mHandler;
     Message mMessage;
+    OCFile mFile;
+    List <String> mGroups,mFriends;
     String TAG = ShareFile.class.getSimpleName();
     
     public ShareFile(Context context, OCFile file, List<String> friends, List<String> groups, Handler handler){
+        
         super(context, "setsharedfile.php");
+        mFile = file;
+        mGroups = groups;
+        mFriends = friends;
         mHandler = handler;
         mMessage = handler.obtainMessage();
         mPostParams.add(new BasicNameValuePair("server_id", String.valueOf(file.getFileServerId())));
@@ -36,7 +42,7 @@ public class ShareFile  extends RemoteDataOperation
     
     public void run(){
         Log_OC.d(TAG,"sharing file");
-        try{
+        try{    
             mPost.setEntity(new UrlEncodedFormEntity(mPostParams));
             mResponse = mClient.execute(mPost);
         } catch (Exception e) {
@@ -46,10 +52,10 @@ public class ShareFile  extends RemoteDataOperation
         mStatusCode = mResponse.getStatusLine().getStatusCode();
         if ( mStatusCode == HttpStatus.SC_OK) {  //server replied OK
             Log_OC.d(TAG, "server returned OK");
-            
-            //FIXME update database
+            //FIXME parse errors
+            //FIXME update database with regard to errors
+            mManager.setSharedFile(mFile, mFriends, mGroups);
             mMessage.obj = "You have successfully shared the file";
-            //FIXME parse errrors
         } else {
             //server response error
             Log_OC.d(TAG, "server returned code "+ mStatusCode);
