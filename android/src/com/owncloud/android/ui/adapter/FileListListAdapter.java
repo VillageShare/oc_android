@@ -27,6 +27,7 @@ import android.accounts.Account;
 import android.app.Dialog;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
@@ -40,6 +41,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
@@ -47,6 +49,7 @@ import android.widget.MultiAutoCompleteTextView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.owncloud.android.googleauth.HelloActivity;
 import com.owncloud.android.DisplayUtils;
 import com.owncloud.android.Log_OC;
 import com.owncloud.android.R;
@@ -417,6 +420,49 @@ public class FileListListAdapter extends    BaseAdapter         //BaseAdapter - 
                             //dataSourceShareFile.close();
                         }
                     });
+                    
+                    
+                    /**
+                     * Youtube Button
+                     * Uploads video to Youtube
+                     * */
+                   ImageButton YoutubeBtn = (ImageButton)dialog.findViewById(R.id.youtubeBtn);
+                   OCFile f1 = (OCFile)getItem(position);
+                   if(!f1.getMimeTypeFromName().startsWith("video/")) {
+                       YoutubeBtn.setEnabled(false);
+                       YoutubeBtn.setVisibility(android.view.View.INVISIBLE);
+                       Log.d(TAG, "File is not a video so Youtube sharing option is disabled");
+                   }
+                   
+                   YoutubeBtn.setOnClickListener(new OnClickListener() {
+                       @Override
+                       public void onClick(View v) {
+                           // Make a call to UploadVideo
+                           OCFile file  =  (OCFile)getItem(position);
+                           String filename = file.getFileName();
+                           Log.d(TAG, "File is a video and will be uploaded to YouTube");
+                           /* TODO THIS IS TEMPORARY */
+                           /* TODO Launch a new dialog so user can enter comma separated tags */
+                           List<String> tags = new ArrayList<String>();
+                           tags.add("tag1");
+                           tags.add("tag2");
+                           
+                           // Highly coupled with the order of contents in main_activity_items
+                           Intent intent = new Intent(mContext, HelloActivity.class);
+                        
+                           if (position == 0) {
+                               intent.putExtra(HelloActivity.TYPE_KEY, HelloActivity.Type.FOREGROUND.name());
+                           } else if (position == 1) {
+                               intent.putExtra(HelloActivity.TYPE_KEY, HelloActivity.Type.BACKGROUND.name());
+                           } else if (position == 2) {
+                               intent.putExtra(HelloActivity.TYPE_KEY, HelloActivity.Type.BACKGROUND_WITH_SYNC.name());
+                           }
+                           mContext.startActivity(intent);
+                           //UploadVideoActivity uv = new UploadVideoActivity(mContext, filename, tags);
+                           //uv.run();
+                           dialog.dismiss();
+                       }
+                   });
                 }//end of onclick shareButton              
                 
             }); //end of ShareButton

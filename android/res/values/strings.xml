@@ -336,4 +336,7 @@
     <string name="actionbar_quit">Quit</string>
     <string name="share_with_friends">Enter friends you want to share with</string>
     <string name="share_with_groups">Enter groups you want to share with</string>
+    <string name="unrecoverable_error">Unrecoverable Play Services error</string>
+    <string name="greet_me">Greet Me</string>
+    <string name="upload_video">Upload Video to YouTube</string>
 </resources>

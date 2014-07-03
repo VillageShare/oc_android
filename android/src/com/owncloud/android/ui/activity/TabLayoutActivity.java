@@ -13,6 +13,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.TabHost;
 
+
 import com.actionbarsherlock.app.ActionBar;
 import com.owncloud.android.R;
 /**
@@ -49,9 +50,9 @@ public class TabLayoutActivity extends TabActivity {
         mTabHost.addTab(spec3);
 
         //uncomment the below lines to include facebook friend import
-        intent = new Intent(this, FacebookSync.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        spec4 = mTabHost.newTabSpec("Facebook").setIndicator("Facebook").setContent(intent);
-        mTabHost.addTab(spec4); 
+        //intent = new Intent(this, FacebookSync.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        //spec4 = mTabHost.newTabSpec("Facebook").setIndicator("Facebook").setContent(intent);
+        //mTabHost.addTab(spec4); 
 
         // Adding Refresh and enabling back button
         android.app.ActionBar ab = getActionBar();

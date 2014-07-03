@@ -65,7 +65,7 @@ public class RegisterNewUserActivity extends Activity implements OnFocusChangeLi
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
+        Log.d("RegisterNewUserActivity", "in onCreate()");
         
         setContentView(R.layout.register_newuser);
         mHostUrlInput = (EditText)findViewById(R.id.hostUrlInput);
@@ -81,9 +81,9 @@ public class RegisterNewUserActivity extends Activity implements OnFocusChangeLi
     }
     
     
-    public void onClickCreateNewUser(View view) {
-        
-        hostUrl = mHostUrlInput.getText().toString().trim();
+    public void onClickCreateNewUser(View view) {   
+        Log.d("RegisterNewUserActivity", "In Register New User");
+        /*hostUrl = mHostUrlInput.getText().toString().trim();
         String username = userName.getText().toString().trim();
         String location = locationSpinner.getSelectedItem().toString();
         String passwordVa = password1.getText().toString().trim();
@@ -108,7 +108,7 @@ public class RegisterNewUserActivity extends Activity implements OnFocusChangeLi
             @Override
             public void run() {
                 
-               HttpPost post = new HttpPost("http://"+hostUrl+"/index.php/apps/friends/friendrequest");
+               HttpPost post = new HttpPost(hostUrl+"/androiduserreg.php");
                
                HttpEntity entity;
                try {
@@ -131,17 +131,17 @@ public class RegisterNewUserActivity extends Activity implements OnFocusChangeLi
                } catch (UnsupportedEncodingException e) {
                    // TODO Auto-generated catch block
                    e.printStackTrace();
-               } /*catch (ClientProtocolException e) {
+               } catch (ClientProtocolException e) {
                    // TODO Auto-generated catch block
                    e.printStackTrace();
-               }*/ catch (IOException e) {
+               } catch (IOException e) {
                    // TODO Auto-generated catch block
                    e.printStackTrace();
                } 
                }
             };
             new Thread(runnable).start();
-        }
+        }*/
     }
     
     private void onUrlInputFocusLost(TextView hostInput) {

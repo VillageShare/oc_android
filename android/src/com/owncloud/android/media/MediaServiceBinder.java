@@ -177,7 +177,6 @@ public class MediaServiceBinder extends Binder implements MediaController.MediaP
     }
 
 
-    @Override
     public int getAudioSessionId() {
         // TODO Auto-generated method stub
         return 0;

@@ -157,28 +157,28 @@ public class MediaService extends Service implements OnCompletionListener, OnPre
         if (what == OC_MEDIA_ERROR) {
             messageId = extra;
                 
-        } else if (extra == MediaPlayer.MEDIA_ERROR_UNSUPPORTED) {
+        } else if (extra == MediaPlayer.MEDIA_ERROR_UNKNOWN) {
             /*  Added in API level 17
                 Bitstream is conforming to the related coding standard or file spec, but the media framework does not support the feature.
                 Constant Value: -1010 (0xfffffc0e)
              */
             messageId = R.string.media_err_unsupported;
 
-        } else if (extra == MediaPlayer.MEDIA_ERROR_IO) {
+        } else if (extra == MediaPlayer.MEDIA_ERROR_UNKNOWN) {
             /*  Added in API level 17
                 File or network related operation errors.
                 Constant Value: -1004 (0xfffffc14) 
              */
             messageId = R.string.media_err_io;
             
-        } else if (extra == MediaPlayer.MEDIA_ERROR_MALFORMED) {
+        } else if (extra == MediaPlayer.MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK) {
             /*  Added in API level 17
                 Bitstream is not conforming to the related coding standard or file spec.
                 Constant Value: -1007 (0xfffffc11) 
              */
             messageId = R.string.media_err_malformed;
             
-        } else if (extra == MediaPlayer.MEDIA_ERROR_TIMED_OUT) {
+        } else if (extra == MediaPlayer.MEDIA_ERROR_UNKNOWN) {
             /*  Added in API level 17
                 Some operation takes too long to complete, usually more than 3-5 seconds.
                 Constant Value: -110 (0xffffff92)
