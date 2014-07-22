@@ -176,19 +176,6 @@ public class MediaServiceBinder extends Binder implements MediaController.MediaP
         return (currentState == MediaService.State.PLAYING || currentState == MediaService.State.PAUSED);
     }
 
-
-    public int getAudioSessionId() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-/*
-    @Override
-    public int getAudioSessionId() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-*/
 }
 
 

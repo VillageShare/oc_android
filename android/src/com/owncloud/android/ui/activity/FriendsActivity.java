@@ -21,8 +21,14 @@ import com.owncloud.android.R;
  *
  */
 public class FriendsActivity extends Activity implements OnClickListener{
-    
+
     @Override
+    public void onClick(View v) {
+        // TODO Auto-generated method stub
+        
+    }
+    
+    /*@Override
     public void onCreate(Bundle savedInstanceState){
         
         super.onCreate(savedInstanceState);
@@ -53,6 +59,6 @@ public class FriendsActivity extends Activity implements OnClickListener{
     public void onClick(View v) {
         // TODO Auto-generated method stub
         
-    }
+    }*/
     
 }

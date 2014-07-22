@@ -41,7 +41,13 @@ import android.widget.AdapterView.OnItemClickListener;
 
 public class PushToServerAsync extends AsyncTask<JSONArray, Integer , Integer> {
 
-    final String PARAM_USERNAME="Username";
+    @Override
+    protected Integer doInBackground(JSONArray... params) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    /*final String PARAM_USERNAME="Username";
     final String PARAM_FRIENDS="friends";
     final String url = FacebookSync.url;
     String username = "Smruthi Manjunath";
@@ -78,7 +84,7 @@ public class PushToServerAsync extends AsyncTask<JSONArray, Integer , Integer> {
         HttpEntity entity;
         
         
-        /*for(int i = 0;i<json1[0].length();i++){
+        for(int i = 0;i<json1[0].length();i++){
             JSONObject jar1;
             try {
                 jar1 = json1[0].getJSONObject(i);
@@ -88,7 +94,7 @@ public class PushToServerAsync extends AsyncTask<JSONArray, Integer , Integer> {
                 e.printStackTrace();
             }
             
-        }*/
+        }
      try {
          HttpPost post = new HttpPost("http://"+url+"/owncloud/index.php/apps/friends/android");
          //post.setHeader("Content-type", "application/json");
@@ -110,10 +116,10 @@ public class PushToServerAsync extends AsyncTask<JSONArray, Integer , Integer> {
      } catch (UnsupportedEncodingException e) {
          // TODO Auto-generated catch block
          e.printStackTrace();
-     } /*catch (ClientProtocolException e) {
+     } catch (ClientProtocolException e) {
          // TODO Auto-generated catch block
          e.printStackTrace();
-     }*/ catch (IOException e) {
+     } catch (IOException e) {
          // TODO Auto-generated catch block
          e.printStackTrace();
      }
@@ -133,6 +139,6 @@ public class PushToServerAsync extends AsyncTask<JSONArray, Integer , Integer> {
         }
         
     }
-    
+    */
         
 }

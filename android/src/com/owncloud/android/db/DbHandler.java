@@ -32,22 +32,22 @@ import android.database.sqlite.SQLiteOpenHelper;
  * 
  */
 public class DbHandler {
-    private SQLiteDatabase mDB;                                     //database
+    private SQLiteDatabase mDB;
     private OpenerHelper mHelper;
-    private final String mDatabaseName = "ownCloud";                //
+    private final String mDatabaseName = "ownCloud";
     private final int mDatabaseVersion = 3;
 
-    private final String TABLE_INSTANT_UPLOAD = "instant_upload";       //table name
+    private final String TABLE_INSTANT_UPLOAD = "instant_upload";
 
-    public static final int UPLOAD_STATUS_UPLOAD_LATER = 0;             //status when queud 
-    public static final int UPLOAD_STATUS_UPLOAD_FAILED = 1;            //status when failed
+    public static final int UPLOAD_STATUS_UPLOAD_LATER = 0;
+    public static final int UPLOAD_STATUS_UPLOAD_FAILED = 1;
 
     public DbHandler(Context context) {
         mHelper = new OpenerHelper(context);
         mDB = mHelper.getWritableDatabase();
     }
 
-    public void close() {                                               //cleaning up db
+    public void close() {
         mDB.close();
     }
 
@@ -95,19 +95,19 @@ public class DbHandler {
 
     }
 
-    private class OpenerHelper extends SQLiteOpenHelper {                   //helps to manage db
+    private class OpenerHelper extends SQLiteOpenHelper {
         public OpenerHelper(Context context) {
             super(context, mDatabaseName, null, mDatabaseVersion);
         }
 
         @Override
-        public void onCreate(SQLiteDatabase db) {                           //initialize db
+        public void onCreate(SQLiteDatabase db) {
             db.execSQL("CREATE TABLE " + TABLE_INSTANT_UPLOAD + " (" + " _id INTEGER PRIMARY KEY, " + " path TEXT,"
                     + " account TEXT,attempt INTEGER,message TEXT);");
         }
 
         @Override
-        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {      //upgrade db version 
+        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
             if (oldVersion < 2) {
                 db.execSQL("ALTER TABLE " + TABLE_INSTANT_UPLOAD + " ADD COLUMN attempt INTEGER;");
             }

@@ -30,7 +30,13 @@ import android.util.Log;
  */
 public class PostFriendsToServer extends AsyncTask<Long, Integer, JSONArray>{
 
-    private static final int TIMEOUT_MILLISEC = 10;
+    @Override
+    protected JSONArray doInBackground(Long... params) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+   /* private static final int TIMEOUT_MILLISEC = 10;
 
     protected void onPostExecute(JSONArray json1) {
         //showDialog("Downloaded " + result + " bytes");
@@ -82,30 +88,30 @@ public class PostFriendsToServer extends AsyncTask<Long, Integer, JSONArray>{
             final ArrayList<NameValuePair> params = new ArrayList<NameValuePair>();
             params.add(new BasicNameValuePair("USERNAME", username));
             params.add(new BasicNameValuePair("INTERESTS", obj1.toString()));
-            /*for(int i=0;i<interests.length;i++){
+            for(int i=0;i<interests.length;i++){
             Log.d("tayhsd giaejrpwqjrpqjwr[ ", interests.getJSONObject(i).toString());
-            } */
+            } 
             HttpEntity entity =  new UrlEncodedFormEntity(params);
             //final HttpPost post = new HttpPost(UPDATE_INTERESTS_URI);
             post.setEntity(entity);
             HttpResponse response = client.execute(post);
             
-            /*post.setHeader("Content-type", "application/json");
+            post.setHeader("Content-type", "application/json");
             post.setHeader("Accept", "application/json");
         JSONObject obj = new JSONObject();
         obj.put("username", "abcd");
         obj.put("password", "1234");
             post.setEntity(new StringEntity(obj.toString(), "UTF-8"));
-            HttpResponse response = client.execute(post);  */
+            HttpResponse response = client.execute(post);  
             
             
-            /*nameValuePairs.add(new BasicNameValuePair("param1","EKOEWK"));
+            nameValuePairs.add(new BasicNameValuePair("param1","EKOEWK"));
             nameValuePairs.add(new BasicNameValuePair("param2","KMWEKMR"));
             post.setEntity(new UrlEncodedFormEntity(nameValuePairs)); 
             //post.setEntity(new UrlEncodedFormEntity(ne, "utf-8"));
             //post.setEntity(entity);
             //post.setEntity(new UrlEncodedFormEntity((List<? extends org.apache.http.NameValuePair>) ne));
-            HttpResponse response = client.execute(post);*/
+            HttpResponse response = client.execute(post);
             
             Log.d("Http esponse"," "+response.getStatusLine().toString());
         } catch (UnsupportedEncodingException e) {
@@ -121,7 +127,7 @@ public class PostFriendsToServer extends AsyncTask<Long, Integer, JSONArray>{
         
         
         return null;
-    }
+    }*/
 
 
 }

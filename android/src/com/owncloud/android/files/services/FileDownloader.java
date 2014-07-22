@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentMap;
 
 import com.owncloud.android.authentication.AccountAuthenticator;
 import com.owncloud.android.authentication.AuthenticatorActivity;
-import com.owncloud.android.datamodel.OCDataStorageManager;
+import com.owncloud.android.datamodel.FileDataStorageManager;
 import com.owncloud.android.datamodel.OCFile;
 import eu.alefzero.webdav.OnDatatransferProgressListener;
 
@@ -82,7 +82,7 @@ public class FileDownloader extends Service implements OnDatatransferProgressLis
     private IBinder mBinder;
     private WebdavClient mDownloadClient = null;
     private Account mLastAccount = null;
-    private OCDataStorageManager mStorageManager;
+    private FileDataStorageManager mStorageManager;
     
     private ConcurrentMap<String, DownloadFileOperation> mPendingDownloads = new ConcurrentHashMap<String, DownloadFileOperation>();
     private DownloadFileOperation mCurrentDownload = null;
@@ -110,12 +110,12 @@ public class FileDownloader extends Service implements OnDatatransferProgressLis
     public void onCreate() {
         super.onCreate();
         mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        HandlerThread thread = new HandlerThread("FileDownloaderThread",        //thread with looper
-                Process.THREAD_PRIORITY_BACKGROUND);                            //to run in backgrd
+        HandlerThread thread = new HandlerThread("FileDownloaderThread",
+                Process.THREAD_PRIORITY_BACKGROUND);
         thread.start();
         mServiceLooper = thread.getLooper();
-        mServiceHandler = new ServiceHandler(mServiceLooper, this);             //message handler
-        mBinder = new FileDownloaderBinder();                                   //service binder
+        mServiceHandler = new ServiceHandler(mServiceLooper, this);
+        mBinder = new FileDownloaderBinder();
     }
 
     /**
@@ -126,23 +126,25 @@ public class FileDownloader extends Service implements OnDatatransferProgressLis
      */
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (!intent.hasExtra(EXTRA_ACCOUNT) ||
-            !intent.hasExtra(EXTRA_FILE)) { //nothing to do here
+        if (    !intent.hasExtra(EXTRA_ACCOUNT) ||
+                !intent.hasExtra(EXTRA_FILE)
+                /*!intent.hasExtra(EXTRA_FILE_PATH) ||
+                !intent.hasExtra(EXTRA_REMOTE_PATH)*/
+           ) {
             Log_OC.e(TAG, "Not enough information provided in intent");
             return START_NOT_STICKY;
         }
         Account account = intent.getParcelableExtra(EXTRA_ACCOUNT);
         OCFile file = intent.getParcelableExtra(EXTRA_FILE);
         
-        AbstractList<String> requestedDownloads = new Vector<String>(); // dvelasco:
-        //list is here to download of multiple selection in the future
+        AbstractList<String> requestedDownloads = new Vector<String>(); // dvelasco: now this always contains just one element, but that can change in a near future (download of multiple selection)
         String downloadKey = buildRemoteName(account, file);
         try {
-            DownloadFileOperation newDownload = new DownloadFileOperation(account, file);   //Runnable
-            mPendingDownloads.putIfAbsent(downloadKey, newDownload);                        //list of pending downloads
-            newDownload.addDatatransferProgressListener(this);                              //
-            newDownload.addDatatransferProgressListener((FileDownloaderBinder)mBinder);     //
-            requestedDownloads.add(downloadKey);                                            //list of requested downloads
+            DownloadFileOperation newDownload = new DownloadFileOperation(account, file); 
+            mPendingDownloads.putIfAbsent(downloadKey, newDownload);
+            newDownload.addDatatransferProgressListener(this);
+            newDownload.addDatatransferProgressListener((FileDownloaderBinder)mBinder);
+            requestedDownloads.add(downloadKey);
             sendBroadcastNewDownload(newDownload);
             
         } catch (IllegalArgumentException e) {
@@ -150,7 +152,7 @@ public class FileDownloader extends Service implements OnDatatransferProgressLis
             return START_NOT_STICKY;
         }
         
-        if (requestedDownloads.size() > 0) {        //????
+        if (requestedDownloads.size() > 0) {
             Message msg = mServiceHandler.obtainMessage();
             msg.arg1 = startId;
             msg.obj = requestedDownloads;
@@ -173,7 +175,7 @@ public class FileDownloader extends Service implements OnDatatransferProgressLis
 
 
     /**
-     * Called when ALL the bound clients were unbound.
+     * Called when ALL the bound clients were onbound.
      */
     @Override
     public boolean onUnbind(Intent intent) {
@@ -343,7 +345,7 @@ public class FileDownloader extends Service implements OnDatatransferProgressLis
                 /// prepare client object to send the request to the ownCloud server
                 if (mDownloadClient == null || !mLastAccount.equals(mCurrentDownload.getAccount())) {
                     mLastAccount = mCurrentDownload.getAccount();
-                    mStorageManager = new OCDataStorageManager(mLastAccount, getContentResolver());
+                    mStorageManager = new FileDataStorageManager(mLastAccount, getContentResolver());
                     mDownloadClient = OwnCloudClientUtils.createOwnCloudClient(mLastAccount, getApplicationContext());
                 }
 
@@ -518,7 +520,7 @@ public class FileDownloader extends Service implements OnDatatransferProgressLis
         end.putExtra(ACCOUNT_NAME, download.getAccount().name);
         end.putExtra(EXTRA_REMOTE_PATH, download.getRemotePath());
         end.putExtra(EXTRA_FILE_PATH, download.getSavePath());
-        sendStickyBroadcast(end);   
+        sendStickyBroadcast(end);
     }
     
     
@@ -532,7 +534,7 @@ public class FileDownloader extends Service implements OnDatatransferProgressLis
         added.putExtra(ACCOUNT_NAME, download.getAccount().name);
         added.putExtra(EXTRA_REMOTE_PATH, download.getRemotePath());
         added.putExtra(EXTRA_FILE_PATH, download.getSavePath());
-        sendStickyBroadcast(added);         //send Intent that will stay around
+        sendStickyBroadcast(added);
     }
 
 }

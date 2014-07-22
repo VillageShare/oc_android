@@ -41,7 +41,7 @@ import android.widget.Toast;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.owncloud.android.Log_OC;
 import com.owncloud.android.R;
-import com.owncloud.android.datamodel.OCDataStorageManager;
+import com.owncloud.android.datamodel.FileDataStorageManager;
 import com.owncloud.android.datamodel.OCFile;
 import com.owncloud.android.ui.dialog.IndeterminateProgressDialog;
 import com.owncloud.android.utils.FileStorageUtils;
@@ -69,7 +69,7 @@ public class ErrorsWhileCopyingHandlerActivity  extends SherlockFragmentActivity
     private static final String WAIT_DIALOG_TAG = "WAIT_DIALOG";
     
     protected Account mAccount;
-    protected OCDataStorageManager mStorageManager;
+    protected FileDataStorageManager mStorageManager;
     protected ArrayList<String> mLocalPaths;
     protected ArrayList<String> mRemotePaths;
     protected ArrayAdapter<String> mAdapter;
@@ -88,7 +88,7 @@ public class ErrorsWhileCopyingHandlerActivity  extends SherlockFragmentActivity
         mAccount = intent.getParcelableExtra(EXTRA_ACCOUNT);
         mRemotePaths = intent.getStringArrayListExtra(EXTRA_REMOTE_PATHS);
         mLocalPaths = intent.getStringArrayListExtra(EXTRA_LOCAL_PATHS);
-        mStorageManager = new OCDataStorageManager(mAccount, getContentResolver());
+        mStorageManager = new FileDataStorageManager(mAccount, getContentResolver());
         mHandler = new Handler();
         if (mCurrentDialog != null) {
             mCurrentDialog.dismiss();

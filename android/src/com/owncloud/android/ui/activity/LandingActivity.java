@@ -42,12 +42,12 @@ import com.owncloud.android.R;
  * 
  */
 public class LandingActivity extends SherlockFragmentActivity implements
-        OnClickListener, OnItemClickListener {  //why not DialogInterface.OnclickListener????
+        OnClickListener, OnItemClickListener {
 
-    public static final int DIALOG_SETUP_ACCOUNT = 1;   //when opening account setup
+    public static final int DIALOG_SETUP_ACCOUNT = 1;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) { //
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
@@ -58,7 +58,7 @@ public class LandingActivity extends SherlockFragmentActivity implements
 
         // Check, if there are ownCloud accounts
         if (!accountsAreSetup()) {
-            showDialog(DIALOG_SETUP_ACCOUNT);       //call to onCreateDialog
+            showDialog(DIALOG_SETUP_ACCOUNT);
         } else {
             // Start device tracking service
             Intent locationServiceIntent = new Intent();
@@ -88,7 +88,7 @@ public class LandingActivity extends SherlockFragmentActivity implements
     }
 
     @Override
-    protected Dialog onCreateDialog(int id) {   //dialog managed by this activity
+    protected Dialog onCreateDialog(int id) {
         Dialog dialog;
         switch (id) {
         case DIALOG_SETUP_ACCOUNT:
@@ -106,10 +106,8 @@ public class LandingActivity extends SherlockFragmentActivity implements
 
         return dialog;
     }
-    
-    
-    @Override
-    public void onClick(DialogInterface dialog, int which) { // Dialog.onclickListenet
+
+    public void onClick(DialogInterface dialog, int which) {
         // In any case - we won't need it anymore
         dialog.dismiss();
         switch (which) {
@@ -125,13 +123,12 @@ public class LandingActivity extends SherlockFragmentActivity implements
 
     }
 
-    
+    @Override
     /**
      * Start an activity based on the selection
      * the user made
      */
-    @Override
-    public void onItemClick(AdapterView<?> parent, View view, int position, //onItemClickListener
+    public void onItemClick(AdapterView<?> parent, View view, int position,
             long id) {
         Intent intent;
         intent = (Intent) parent.getAdapter().getItem(position);

@@ -1525,7 +1525,7 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity implemen
         } else {
             //username = username + "@" + loc;
             final ArrayList<NameValuePair> params = new ArrayList<NameValuePair>();
-            params.add(new BasicNameValuePair("regname", username+"@"+loc));
+            params.add(new BasicNameValuePair("regname", username));
             params.add(new BasicNameValuePair("regpass1", passwordva1));
             params.add(new BasicNameValuePair("regpass2", passwordva2));
             // Log.d("sdn object ",params.toString());
@@ -1534,7 +1534,7 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity implemen
                 @Override
                 public void run() {
 
-                    HttpPost post = new HttpPost(str1 +"/androiduserreg.php");
+                    HttpPost post = new HttpPost("http://" + str1 +"/androiduserreg.php");
 
                     HttpEntity entity;
                     try {

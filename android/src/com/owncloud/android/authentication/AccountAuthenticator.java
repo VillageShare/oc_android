@@ -44,8 +44,8 @@ public class AccountAuthenticator extends AbstractAccountAuthenticator {
      */
     public static final String ACCOUNT_TYPE = "owncloud";
     public static final String AUTHORITY = "org.owncloud";
-    public static final String AUTH_TOKEN_TYPE_PASSWORD = "owncloud.password";
     public static final String AUTH_TOKEN_TYPE = "org.owncloud";
+    public static final String AUTH_TOKEN_TYPE_PASSWORD = "owncloud.password";
     public static final String AUTH_TOKEN_TYPE_ACCESS_TOKEN = "owncloud.oauth2.access_token";
     public static final String AUTH_TOKEN_TYPE_REFRESH_TOKEN = "owncloud.oauth2.refresh_token";
     public static final String AUTH_TOKEN_TYPE_SAML_WEB_SSO_SESSION_COOKIE = "owncloud.saml.web_sso.session_cookie";

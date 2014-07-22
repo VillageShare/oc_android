@@ -50,7 +50,7 @@ import android.widget.Toast;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
-import com.owncloud.android.datamodel.OCDataStorageManager;
+import com.owncloud.android.datamodel.FileDataStorageManager;
 import com.owncloud.android.datamodel.OCFile;
 import com.owncloud.android.operations.OnRemoteOperationListener;
 import com.owncloud.android.operations.RemoteOperation;
@@ -80,7 +80,7 @@ public class PreviewImageFragment extends FileFragment implements   OnRemoteOper
 
     private View mView;
     private Account mAccount;
-    private OCDataStorageManager mStorageManager;
+    private FileDataStorageManager mStorageManager;
     private ImageView mImageView;
     private TextView mMessageView;
     private ProgressBar mProgressWheel;
@@ -174,7 +174,7 @@ public class PreviewImageFragment extends FileFragment implements   OnRemoteOper
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        mStorageManager = new OCDataStorageManager(mAccount, getActivity().getApplicationContext().getContentResolver());
+        mStorageManager = new FileDataStorageManager(mAccount, getActivity().getApplicationContext().getContentResolver());
         if (savedInstanceState != null) {
             if (!mIgnoreFirstSavedState) {
                 setFile((OCFile)savedInstanceState.getParcelable(PreviewImageFragment.EXTRA_FILE));

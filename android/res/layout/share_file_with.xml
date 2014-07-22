@@ -1,64 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/sharefilewith"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:background="@android:color/background_light"
-    android:gravity="right"
-    android:orientation="vertical" >
-
- <MultiAutoCompleteTextView 
-    android:id="@+id/multiautocompletesharef"
+    	android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:id="@+id/sharefilewith"
+        android:orientation="vertical"
+         android:background="@android:color/background_light" >
+<AutoCompleteTextView 
+    android:id="@+id/autocompleteshare"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">      
-</MultiAutoCompleteTextView>
+    android:layout_height="wrap_content"
+>   
 
-<MultiAutoCompleteTextView 
-    android:id="@+id/multiautocompleteshareg"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content" 
-	android:layout_below="@id/multiautocompletesharef">  
-</MultiAutoCompleteTextView>
+    
+</AutoCompleteTextView>
 
 <Button
-    android:id="@+id/OKBtn"
+    android:id="@+id/ShareBtn"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_below="@id/multiautocompleteshareg"
+    android:layout_below="@id/autocompleteshare"
     android:text="OK"
     />
 <Button
-    android:id="@+id/CancelBtn"
+    android:id="@+id/ShareDoneBtn"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_toRightOf="@id/OKBtn"
-    android:layout_below="@id/multiautocompleteshareg"
-    android:text="Cancel"
+    android:layout_toRightOf="@id/ShareBtn"
+    android:layout_below="@id/autocompleteshare"
+    android:text="DONE"
     />
 <ListView
     android:id="@+id/alreadySharedWithList"
-    android:scrollbars="vertical"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_below="@id/OKBtn"/>
-
-<ImageButton
-    android:id="@+id/FbBtn"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_below="@+id/multiautocompleteshareg"
-    android:layout_toLeftOf="@+id/youtubeBtn"
-    android:background="@null"
-    android:src="@drawable/fb" />
-
-<ImageButton
-    android:id="@+id/youtubeBtn"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_above="@+id/alreadySharedWithList"
-    android:layout_alignParentRight="true"
-    android:layout_marginRight="14dp"
-    android:background="@null"
-    android:src="@drawable/youtube" />
+    android:layout_below="@id/ShareBtn"/>
 
 </RelativeLayout>

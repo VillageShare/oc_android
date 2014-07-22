@@ -79,8 +79,8 @@ public class SynchronizeFileOperation extends RemoteOperation {
         RemoteOperationResult result = null;
         mTransferWasRequested = false;
         try {
-            //????
             if (!mLocalFile.isDown()) {
+                /// easy decision
                 requestForDownload(mLocalFile);
                 result = new RemoteOperationResult(ResultCode.OK);
                 

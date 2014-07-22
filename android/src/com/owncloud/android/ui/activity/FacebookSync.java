@@ -7,61 +7,178 @@
  */
 package com.owncloud.android.ui.activity;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
-
-import org.apache.http.NameValuePair;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import android.accounts.Account;
-import android.accounts.AccountManager;
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.Dialog;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.StrictMode;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
-import android.view.Menu;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.ListView;
-import android.widget.PopupWindow;
-import android.widget.TextView;
-import android.widget.Toast;
 
-import com.facebook.android.AsyncFacebookRunner;
-import com.facebook.android.AsyncFacebookRunner.RequestListener;
-import com.facebook.android.DialogError;
-import com.facebook.android.Facebook;
-import com.facebook.android.Facebook.DialogListener;
-import com.facebook.android.FacebookError;
-import com.facebook.android.Util;
+import com.facebook.Session;
+import com.facebook.SessionState;
+import com.facebook.UiLifecycleHelper;
 import com.owncloud.android.R;
-import com.owncloud.android.authentication.AccountAuthenticator;
-import com.owncloud.android.authentication.AccountUtils;
-import com.owncloud.android.utils.OwnCloudVersion;
 
 /**
  * 
  * @author Smruthi Manjunath
  *
  */
-public class FacebookSync extends Activity implements OnClickListener,DialogInterface.OnClickListener{
+public class FacebookSync extends FragmentActivity {
+    
+    private static final int SPLASH = 0;
+    private static final int SELECTION = 1;
+    private static final int FRAGMENT_COUNT = SELECTION +1;
 
-    String APP_ID;
+    private Fragment[] fragments = new Fragment[FRAGMENT_COUNT];
+    private boolean isResumed = false;
+    
+    private UiLifecycleHelper uiHelper;
+    private Session.StatusCallback callback = 
+        new Session.StatusCallback() {
+        @Override
+        public void call(Session session, 
+                SessionState state, Exception exception) {
+            onSessionStateChange(session, state, exception);
+            FragmentManager fm = getSupportFragmentManager();
+            fm.executePendingTransactions();
+            
+        }
+    };
+    
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        if(savedInstanceState == null) {
+            Log.d("FacebookSync.onCreate()","savedInstanceState is null");
+        }
+        super.onCreate(savedInstanceState);
+        Log.d("FacebookSync.onCreate()", "super.onCreate called");
+        uiHelper = new UiLifecycleHelper(this, callback);
+        
+        Log.d("FacebookSync.onCreate()", "uiHelper instatiated");
+        uiHelper.onCreate(savedInstanceState);
+        Log.d("FacebookSync.onCreate()", "uiHelper.onCreate called");
+        
+        
+        setContentView(R.layout.sync_page);
+        Log.d("FacebookSync.onCreate()", "setContentView(R.layout.sync_page)");
+        FragmentManager fm = getSupportFragmentManager();
+        fragments[SPLASH] = fm.findFragmentById(R.id.splashFragment);
+        fragments[SELECTION] = fm.findFragmentById(R.id.selectionFragment);
+        Log.d("FacebookSync.onCreate()", "fragments added SPLASH and SELECTION");
+        
+        FragmentTransaction transaction = fm.beginTransaction();
+        Log.d("FacebookSync.onCreate()", "fm.beginTransaction()");
+        for(int i = 0; i < fragments.length; i++) {
+            transaction.hide(fragments[i]);
+        }
+        transaction.commit();
+    }
+    
+ 
+    
+    
+    private void showFragment(int fragmentIndex, boolean addToBackStack) {
+        Log.d("FBSync", "showFragment");
+        FragmentManager fm = getSupportFragmentManager();
+        FragmentTransaction transaction = fm.beginTransaction();
+        for (int i = 0; i < fragments.length; i++) {
+            if (i == fragmentIndex) {
+                transaction.show(fragments[i]);
+                
+            } else {
+                transaction.hide(fragments[i]);
+            }
+        }
+        if (addToBackStack) {
+            transaction.addToBackStack(null);
+        }
+        transaction.commit();
+    }
+    
+    @Override
+    public void onResume() {
+        super.onResume();
+        uiHelper.onResume();
+        isResumed = true;
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        uiHelper.onPause();
+        isResumed = false;
+    }
+    
+    
+    
+    private void onSessionStateChange(Session session, SessionState state, Exception exception) {
+        // Only make changes if the activity is visible
+        if (isResumed) {
+            Log.d("FBSync", "onSessionStateChange: isResumed = true");
+            FragmentManager manager = getSupportFragmentManager();
+            // Get the number of entries in the back stack
+            int backStackSize = manager.getBackStackEntryCount();
+            // Clear the back stack
+            for (int i = 0; i < backStackSize; i++) {
+                manager.popBackStack();
+            }
+            if (state.isOpened()) {
+                // If the session state is open:
+                // Show the authenticated fragment
+                Log.d("FBSync", "onSessionStateChange: state.isOpened");
+                showFragment(SELECTION, false);
+            } else if (state.isClosed()) {
+                // If the session state is closed:
+                // Show the login fragment
+                Log.d("FBSync", "onSessionStateChange: state.isClosed");
+                showFragment(SPLASH, false);
+            }
+        }
+    }
+    
+    protected void onResumeFragments() {
+        //super.onResumeFragments();
+        Session session = Session.getActiveSession();
+
+        if (session != null && session.isOpened()) {
+            // if the session is already open,
+            // try to show the selection fragment
+            Log.d("FBSync", "session is not null and it is opened");
+            showFragment(SELECTION, false);
+            
+        } else {
+            // otherwise present the splash screen
+            // and ask the person to login.
+            Log.d("FBSync", "session is null or unopened");
+            showFragment(SPLASH, false);
+        }
+    }
+
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        uiHelper.onActivityResult(requestCode, resultCode, data);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        uiHelper.onDestroy();
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        uiHelper.onSaveInstanceState(outState);
+    }
+    
+    
+
+    /*String APP_ID;
     Facebook facebook;
     public static ImageView facebook_sync;
     TextView frnds,add_frnds,pending_request;
@@ -296,6 +413,8 @@ class listener implements RequestListener{
         try {
             data = Util.parseJson(response);
             friendsData = data.getJSONArray("data");
+            int len = friendsData.length();
+            Log.d(TAG,"friendsData.length() = " + len); 
             for(int i = 0;i<friendsData.length();i++){
                 JSONObject friends = friendsData.getJSONObject(i);
                 friendNames.add(friends.optString("name"));
@@ -351,6 +470,6 @@ class listener implements RequestListener{
     public void onFacebookError(FacebookError e, Object state) {
         // TODO Auto-generated method stub
         
-    }
+    }*/
    
 }

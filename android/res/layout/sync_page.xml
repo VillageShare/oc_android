@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- VillageShare -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical" >
+    android:orientation="vertical"
+    android:id="@+id/sync_page_content"  >
     
-    <TextView android:id="@+id/frnds"
+<!--     <TextView android:id="@+id/frnds"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/facebooksync"/>
@@ -13,6 +13,15 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/setup_sync"
-        android:src="@drawable/friend_icon" />
+        android:src="@drawable/friend_icon" /> -->
+        
+        <fragment android:name="com.owncloud.android.ui.fragment.SelectionFragment"
+          android:id="@+id/selectionFragment"
+          android:layout_width="match_parent"
+          android:layout_height="match_parent" />
+   	 	<fragment android:name="com.owncloud.android.ui.fragment.SplashFragment"
+          android:id="@+id/splashFragment"
+          android:layout_width="match_parent"
+          android:layout_height="match_parent" />
 
 </LinearLayout>

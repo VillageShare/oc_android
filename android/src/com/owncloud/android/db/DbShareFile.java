@@ -33,7 +33,7 @@ public class DbShareFile {
     private final String TABLE_YOUR_SHARES = "shared_files";
     String[] fileSharedWith = {"sharedWith"};
     String[] filesSharer = {"ownerId,fileName"};
-    String[] fileSharesPresent = {"ownerId","shatredWith","fileName"};
+    String[] fileSharesPresent = {"ownerId","sharedWith","fileName"};
     String[] filesSharedBeforeInsert = {"ownerId","sharedWith","filename","fileRemotePath"};
     String[] filesSharedBeforeInsertList = {"ownerId","filename","sharedWith"};
 

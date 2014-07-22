@@ -74,6 +74,7 @@ public class FacebookFriendSelectDisplay extends Activity{
             jary = new JSONArray(friendArray);
             JSONObject obj;
             for(int j =0;j<jary.length();j++){
+                Log.d(TAG, "j = " + j);
                 obj = jary.getJSONObject(j);
                 friendList.add(obj.optString("name"));
                 

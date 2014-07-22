@@ -45,7 +45,7 @@ public class ExtendedListFragment extends SherlockFragment implements OnItemClic
     
     public void setListAdapter(ListAdapter listAdapter) {
         mList.setAdapter(listAdapter);
-        mList.invalidate(); //redraw elements
+        mList.invalidate();
     }
 
     public ListView getListView() {
@@ -55,7 +55,7 @@ public class ExtendedListFragment extends SherlockFragment implements OnItemClic
     
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        Log_OC.d(TAG, "onCreateView");
+        Log_OC.e(TAG, "onCreateView");
         //mList = new ExtendedListView(getActivity());
         View v = inflater.inflate(R.layout.list_fragment, null);
         mList = (ExtendedListView)(v.findViewById(R.id.list_root));
@@ -83,7 +83,7 @@ public class ExtendedListFragment extends SherlockFragment implements OnItemClic
     
     /**
      * Calculates the position of the item that will be used as a reference to reposition the visible items in the list when
-        android:focusable="false" * the device is turned to other position. 
+     * the device is turned to other position. 
      * 
      * THe current policy is take as a reference the visible item in the center of the screen.  
      * 

@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.owncloud.android.Log_OC;
-import com.owncloud.android.datamodel.OCDataStorageManager;
+import com.owncloud.android.datamodel.FileDataStorageManager;
 import com.owncloud.android.datamodel.OCFile;
 import com.owncloud.android.db.ProviderMeta.ProviderTableMeta;
 import com.owncloud.android.files.OwnCloudFileObserver;
@@ -53,9 +53,9 @@ public class FileObserverService extends Service {
 
     private static String TAG = FileObserverService.class.getSimpleName();
 
-    private static Map<String, OwnCloudFileObserver> mObserversMap; //observers for all the files
-    private static DownloadCompletedReceiverBis mDownloadReceiver;  //broadcast listener
-    private IBinder mBinder = new LocalBinder();        //????
+    private static Map<String, OwnCloudFileObserver> mObserversMap;
+    private static DownloadCompletedReceiverBis mDownloadReceiver;
+    private IBinder mBinder = new LocalBinder();
 
     public class LocalBinder extends Binder {
         FileObserverService getService() {
@@ -69,9 +69,11 @@ public class FileObserverService extends Service {
         mDownloadReceiver = new DownloadCompletedReceiverBis();
         IntentFilter filter = new IntentFilter();
         filter.addAction(FileDownloader.DOWNLOAD_ADDED_MESSAGE);
-        filter.addAction(FileDownloader.DOWNLOAD_FINISH_MESSAGE);
+        filter.addAction(FileDownloader.DOWNLOAD_FINISH_MESSAGE);        
         registerReceiver(mDownloadReceiver, filter);
+        
         mObserversMap = new HashMap<String, OwnCloudFileObserver>();
+        //initializeObservedList();
     }
     
     
@@ -124,15 +126,15 @@ public class FileObserverService extends Service {
 
     
     /**
-     * Read from the local database the list of files that must be kept in sync and 
+     * Read from the local database the list of files that must to be kept synchronized and 
      * starts file observers to monitor local changes on them
      */
     private void initializeObservedList() {
         mObserversMap.clear();
         Cursor c = getContentResolver().query(
-                ProviderTableMeta.CONTENT_URI,      //
+                ProviderTableMeta.CONTENT_URI,
                 null,
-                ProviderTableMeta.FILE_KEEP_IN_SYNC + " = ?", //files = 1
+                ProviderTableMeta.FILE_KEEP_IN_SYNC + " = ?",
                 new String[] {String.valueOf(1)},
                 null);
         if (c == null || !c.moveToFirst()) return;
@@ -147,8 +149,8 @@ public class FileObserverService extends Service {
                 }
 
             if (account == null) continue;
-            OCDataStorageManager storage =                //??????
-                    new OCDataStorageManager(account, getContentResolver());
+            FileDataStorageManager storage =
+                    new FileDataStorageManager(account, getContentResolver());
             if (!storage.fileExists(c.getString(c.getColumnIndex(ProviderTableMeta.FILE_PATH))))
                 continue;
 

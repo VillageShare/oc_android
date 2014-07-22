@@ -46,7 +46,7 @@ import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
 import com.owncloud.android.DisplayUtils;
 import com.owncloud.android.Log_OC;
-import com.owncloud.android.datamodel.OCDataStorageManager;
+import com.owncloud.android.datamodel.FileDataStorageManager;
 import com.owncloud.android.datamodel.OCFile;
 import com.owncloud.android.files.services.FileObserverService;
 import com.owncloud.android.files.services.FileUploader;
@@ -75,19 +75,16 @@ import eu.alefzero.webdav.OnDatatransferProgressListener;
  * @author Bartek Przybylski
  * @author David A. Velasco
  */
-public class FileDetailFragment extends FileFragment
-                                implements
-                                        OnClickListener,                //onClick(View) for every view
-                                        ConfirmationDialogFragment.ConfirmationDialogFragmentListener,
-                                        OnRemoteOperationListener,
-                                        EditNameDialogListener {
+public class FileDetailFragment extends FileFragment implements
+        OnClickListener, 
+        ConfirmationDialogFragment.ConfirmationDialogFragmentListener, OnRemoteOperationListener, EditNameDialogListener {
 
     private FileFragment.ContainerActivity mContainerActivity;
     
     private int mLayout;
     private View mView;
     private Account mAccount;
-    private OCDataStorageManager mStorageManager;
+    private FileDataStorageManager mStorageManager;
     
     private UploadFinishReceiver mUploadFinishReceiver;
     public ProgressListener mProgressListener;
@@ -189,7 +186,7 @@ public class FileDetailFragment extends FileFragment
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         if (mAccount != null) {
-            mStorageManager = new OCDataStorageManager(mAccount, getActivity().getApplicationContext().getContentResolver());
+            mStorageManager = new FileDataStorageManager(mAccount, getActivity().getApplicationContext().getContentResolver());
         }
     }
         
@@ -516,7 +513,7 @@ public class FileDetailFragment extends FileFragment
                 mStorageManager == null || 
                 (mAccount != null && !mAccount.equals(ocAccount))
            )) {
-            mStorageManager = new OCDataStorageManager(ocAccount, getActivity().getApplicationContext().getContentResolver());
+            mStorageManager = new FileDataStorageManager(ocAccount, getActivity().getApplicationContext().getContentResolver());
         }
         mAccount = ocAccount;
         updateFileDetails(false, false);
@@ -762,7 +759,7 @@ public class FileDetailFragment extends FileFragment
             mLastRemoteOperation = new RenameFileOperation( getFile(), 
                                                             mAccount, 
                                                             newFilename, 
-                                                            new OCDataStorageManager(mAccount, getActivity().getContentResolver()));
+                                                            new FileDataStorageManager(mAccount, getActivity().getContentResolver()));
             mLastRemoteOperation.execute(mAccount, getSherlockActivity(), this, mHandler, getSherlockActivity());
             boolean inDisplayActivity = getActivity() instanceof FileDisplayActivity;
             getActivity().showDialog(FileDisplayActivity.DIALOG_SHORT_WAIT);

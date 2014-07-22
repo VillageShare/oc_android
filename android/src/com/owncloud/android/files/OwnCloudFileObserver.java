@@ -21,7 +21,7 @@ package com.owncloud.android.files;
 import java.io.File;
 
 import com.owncloud.android.Log_OC;
-import com.owncloud.android.datamodel.OCDataStorageManager;
+import com.owncloud.android.datamodel.FileDataStorageManager;
 import com.owncloud.android.datamodel.OCFile;
 import com.owncloud.android.operations.RemoteOperationResult;
 import com.owncloud.android.operations.SynchronizeFileOperation;
@@ -75,7 +75,7 @@ public class OwnCloudFileObserver extends FileObserver {
                          mPath);
             return;
         }
-        OCDataStorageManager storageManager = new OCDataStorageManager(mOCAccount, mContext.getContentResolver());
+        FileDataStorageManager storageManager = new FileDataStorageManager(mOCAccount, mContext.getContentResolver());
         OCFile file = storageManager.getFileByLocalPath(mPath);     // a fresh object is needed; many things could have occurred to the file since it was registered to observe
                                                                     // again, assuming that local files are linked to a remote file AT MOST, SOMETHING TO BE DONE; 
         SynchronizeFileOperation sfo = new SynchronizeFileOperation(file, 

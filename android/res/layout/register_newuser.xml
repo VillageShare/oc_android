@@ -130,7 +130,6 @@
             android:layout_width="wrap_content"
             android:layout_height="0dip"
             android:layout_weight="0.07"
-       
             android:entries="@array/server_array"
             android:prompt="@string/server_location" />
    <TextView 

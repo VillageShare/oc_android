@@ -20,8 +20,6 @@
 <manifest package="com.owncloud.android"
     android:versionCode="104005"
     android:versionName="1.4.5" xmlns:android="http://schemas.android.com/apk/res/android">
-    
-    
 
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.USE_CREDENTIALS" />
@@ -40,26 +38,19 @@
     
     <uses-sdk
         android:minSdkVersion="11"
-        android:targetSdkVersion="14" />
+        android:targetSdkVersion="13" />
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" >
     </uses-permission>
-
     <application
         android:icon="@drawable/icon"
         android:label="@string/app_name"
         android:theme="@style/Theme.ownCloud"> 
-        <meta-data
-            android:name="com.google.android.gms.version"
-            android:value="@integer/google_play_services_version" />
         <activity
             android:name=".ui.activity.FileDisplayActivity"
             android:label="@string/app_name"
             android:configChanges="orientation|keyboardHidden|screenSize"
             >
-            <meta-data
-            android:name="com.google.android.gms.version"
-            android:value="@integer/google_play_services_version" />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -93,8 +84,6 @@
                 </data>
             </intent-filter>
         </activity>
-        <activity android:name="com.owncloud.android.googleauth.HelloActivity">
-        </activity>
         <activity
             android:name=".ui.activity.Preferences"
             android:theme="@style/Theme.ownCloud" >
@@ -121,7 +110,7 @@
                 android:resource="@xml/authenticator" />
         </service>
         <service
-            android:name=".syncadapter.OCDataSyncService"
+            android:name=".syncadapter.FileSyncService"
             android:exported="true" >
             <intent-filter>
                 <action android:name="android.content.SyncAdapter" />
@@ -169,7 +158,9 @@
         <activity android:name=".ui.activity.ConflictsResolveActivity"/>
         <activity android:name=".ui.activity.GenericExplanationActivity"/>
         <activity android:name=".ui.activity.ErrorsWhileCopyingHandlerActivity"/>
-         <activity android:name=".ui.activity.FacebookSync"/>
+        <activity android:name=".ui.activity.FacebookSync"></activity>
+        <activity android:name=".ui.activity.PickerActivity"
+          android:label="@string/app_name" />
         <activity android:name=".ui.activity.TabLayoutActivity"/>
         <activity android:name=".ui.activity.YourFriendsActivity" />
         <activity android:name=".ui.activity.AddFriendsActivity" />
@@ -181,6 +172,7 @@
          <activity android:name=".ui.activity.GroupActivity"/>
          <activity android:name=".ui.activity.ListAllUsersInGroup"/>
         <activity android:name=".ui.activity.LogHistoryActivity"/>
+        <activity android:name="com.facebook.LoginActivity" />
         
         <receiver android:name=".files.InstantUploadBroadcastReceiver">
             <intent-filter>
@@ -205,7 +197,7 @@
          <service android:name=".files.services.FriendNotifierService"/>
          <service android:name=".files.services.FriendListNotifierService"/>
         
-        
+    <meta-data android:name="com.facebook.sdk.ApplicationId" android:value="@string/app_id"/>
     </application>
 
 </manifest>

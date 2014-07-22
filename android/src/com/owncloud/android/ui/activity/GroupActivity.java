@@ -135,20 +135,11 @@ public class GroupActivity extends Activity implements OnClickListener{
 
                     if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
                         HttpEntity entityresponse = response.getEntity();
-                        String jsonentity = EntityUtils.toString(entityresponse).replace("\n","");
+                        String jsonentity = EntityUtils.toString(entityresponse);
                         JSONObject obj = new JSONObject(jsonentity);
-                        //FIXME
-                        JSONObject obj1 = null;
-                        try{obj1 = (JSONObject) obj.get("getUserGroups");}
-                            catch (ClassCastException e){
-                                //No groups returned by server
-                                jary = new JSONArray();
-                            }
-                        if (obj1 != null) {
-                            jary = obj1.names();
-                        }
-                        //jary = (JSONArray) obj.get("getUserGroups");
+                        JSONObject obj1 = (JSONObject) obj.get("getUserGroups");
                         
+                        jary = obj1.names();
                         groupNames.clear();
                         for (int i = 0; i < jary.length(); i++) {
                             groupNames.add(obj1.getString(jary.getString(i)));
@@ -279,6 +270,7 @@ public class GroupActivity extends Activity implements OnClickListener{
                     } catch (IOException e) {
                         e.printStackTrace();
                     } catch (JSONException e) {
+                        // TODO Auto-generated catch block
                         e.printStackTrace();
                     }
                 }
@@ -321,7 +313,6 @@ public class GroupActivity extends Activity implements OnClickListener{
                                 public void run() {
                                     Toast.makeText(GroupActivity.this,
                                             "You have deleted " + groupName + " group", Toast.LENGTH_SHORT).show();
-                                    notifyDataChanged();
                                 }
                             });
                             } else {
