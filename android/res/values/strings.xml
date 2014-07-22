@@ -311,7 +311,6 @@
 	<string name="failed_upload_quota_exceeded_text">Please check your server configuration,maybe your quota is exceeded.</string>
 	<string name="about_connect_friends">friends</string>
 	<string name="welcome_text">Welcome to VillageShare Owncloud</string>
-	<string name="about_connect_friends">friends</string>
     <string name="app_id">525429814225127</string>
     <string name="frnds">My Friends</string>
     <string name="add_frnds">Add Friends</string>
@@ -325,7 +324,6 @@
     <string name="error_title">OK</string>
     <string name="error_ok">OK</string>
     <string name="sharebtn">Share</string>
-    <string name="common_share">Share</string>
     <string name="server_location">Your Home Location</string>
     <string name="facebook_hello">Welcome, you are now logged in.</string>
     <string-array name="server_array">
