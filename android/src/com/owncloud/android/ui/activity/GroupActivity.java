@@ -137,12 +137,12 @@ public class GroupActivity extends Activity implements OnClickListener{
                         HttpEntity entityresponse = response.getEntity();
                         String jsonentity = EntityUtils.toString(entityresponse);
                         JSONObject obj = new JSONObject(jsonentity);
-                        JSONObject obj1 = (JSONObject) obj.get("getUserGroups");
+                        JSONArray groupArray = (JSONArray) obj.get("getUserGroups");
                         
-                        jary = obj1.names();
+                        jary = groupArray;
                         groupNames.clear();
                         for (int i = 0; i < jary.length(); i++) {
-                            groupNames.add(obj1.getString(jary.getString(i)));
+                            groupNames.add(jary.getString(i));
                             //Log.d(TAG, jary.getString(i)+" "+obj1.getString(jary.getString(i)));
                         }
                         runOnUiThread(new Runnable() {
