@@ -41,6 +41,7 @@ public class RemoveFileOperation extends RemoteOperation {
     
     OCFile mFileToRemove;
     boolean mDeleteLocalCopy;
+    boolean mRemoveLocalOnly = false;
     DataStorageManager mDataStorageManager;
     
     
@@ -55,6 +56,21 @@ public class RemoveFileOperation extends RemoteOperation {
         mFileToRemove = fileToRemove;
         mDeleteLocalCopy = deleteLocalCopy;
         mDataStorageManager = storageManager;
+    }
+    
+    /**
+     * Constructor
+     * 
+     * @param fileToRemove          OCFile instance describing the remote file or folder to remove from the server
+     * @param deleteLocalCopy       When 'true', and a local copy of the file exists, it is also removed.
+     * @param storageManager        Reference to the local database corresponding to the account where the file is contained. 
+     * @param removeLocalOnly       Removes the local copy only
+     */
+    public RemoveFileOperation(OCFile fileToRemove, boolean deleteLocalCopy, DataStorageManager storageManager, boolean removeLocalOnly) {
+        mFileToRemove = fileToRemove;
+        mDeleteLocalCopy = deleteLocalCopy;
+        mDataStorageManager = storageManager;
+        mRemoveLocalOnly = removeLocalOnly;
     }
     
     
@@ -78,9 +94,20 @@ public class RemoveFileOperation extends RemoteOperation {
         RemoteOperationResult result = null;
         DeleteMethod delete = null;
         try {
-            delete = new DeleteMethod(client.getBaseUri() + WebdavUtils.encodePath(mFileToRemove.getRemotePath()));
-            int status = client.executeMethod(delete, REMOVE_READ_TIMEOUT, REMOVE_CONNECTION_TIMEOUT);
-            if (delete.succeeded() || status == HttpStatus.SC_NOT_FOUND) {
+            int status = HttpStatus.SC_NOT_FOUND;
+            if(!mRemoveLocalOnly) {
+                delete = new DeleteMethod(client.getBaseUri() + WebdavUtils.encodePath(mFileToRemove.getRemotePath()));
+                status = client.executeMethod(delete, REMOVE_READ_TIMEOUT, REMOVE_CONNECTION_TIMEOUT);
+                
+                if (delete.succeeded() || status == HttpStatus.SC_NOT_FOUND) {
+                    if (mFileToRemove.isDirectory()) {
+                        mDataStorageManager.removeDirectory(mFileToRemove, true, mDeleteLocalCopy);
+                    } else {
+                        mDataStorageManager.removeFile(mFileToRemove, mDeleteLocalCopy);
+                    }
+                }
+            }
+            else if(mRemoveLocalOnly) {
                 if (mFileToRemove.isDirectory()) {
                     mDataStorageManager.removeDirectory(mFileToRemove, true, mDeleteLocalCopy);
                 } else {

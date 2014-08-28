@@ -1,6 +1,9 @@
 package com.owncloud.android.ui.adapter;
 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -25,6 +28,7 @@ import org.json.JSONObject;
 
 import android.accounts.Account;
 import android.app.Dialog;
+import android.app.Activity;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Message;
@@ -47,6 +51,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.owncloud.android.DisplayUtils;
+import com.owncloud.android.ui.activity.GroupActivity;
 import com.owncloud.android.R;
 import com.owncloud.android.authentication.AccountUtils;
 import com.owncloud.android.datamodel.DataStorageManager;
@@ -55,6 +60,7 @@ import com.owncloud.android.db.DbFriends;
 import com.owncloud.android.db.DbShareFile;
 import com.owncloud.android.files.services.FileDownloader.FileDownloaderBinder;
 import com.owncloud.android.files.services.FileUploader.FileUploaderBinder;
+import com.owncloud.android.ui.activity.GroupActivity;
 import com.owncloud.android.ui.activity.TransferServiceGetter;
 
 
@@ -79,6 +85,11 @@ public class FileListListAdapter extends BaseAdapter implements ListAdapter, OnC
     private DataStorageManager mStorageManager;
     private Account mAccount;
     private TransferServiceGetter mTransferServiceGetter;
+    private final String GROUP = "GROUP";
+    private final String USER = "USER";
+    private ArrayList<String> groupList;
+    
+    private Map<String,String> mShareFillAdapter = new HashMap<String, String>();
     
     //total size of a directory (recursive)
     private Long totalSizeOfDirectoriesRecursive = null;
@@ -140,6 +151,7 @@ public class FileListListAdapter extends BaseAdapter implements ListAdapter, OnC
     //Filling out the array of files\folders
     public View getView(final int position, View convertView, ViewGroup parent) {
         //FIXME convertview 
+        
         View view = convertView;
         if (view == null) {
             LayoutInflater inflator = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -156,6 +168,10 @@ public class FileListListAdapter extends BaseAdapter implements ListAdapter, OnC
                 accountName = accountNames[0]+"@"+accountNames[1];
                 url = accountNames[2];
             }
+            
+            
+            groupList = getGroups(accountName);
+            
             
             //set filename
             OCFile file = mFiles.get(position);
@@ -289,14 +305,29 @@ public class FileListListAdapter extends BaseAdapter implements ListAdapter, OnC
                      * Text field for entering multiple friends and groups
                      * */
                     friendsData  = new DbFriends(mContext);
+                    
                     final MultiAutoCompleteTextView textView = (MultiAutoCompleteTextView)dialog.findViewById(R.id.multiautocompleteshare);
                     textView.setTokenizer(new MultiAutoCompleteTextView.CommaTokenizer());
                     textView.setThreshold(1);                           //show hint after 1 char
                                                                         //filling it out with friends got from db
-                    textView.setAdapter(new ArrayAdapter<String>(mContext, android.R.layout.simple_list_item_1,friendsData.getFriendList(accountName)));
+                    ArrayList<String> friendlist = friendsData.getFriendList(accountName);
+                    ArrayList<String> allList = new ArrayList<String>();
+                    for (String g : groupList) {
+                        Log.d("FileListListAdapter", "fill allList: " + g);
+                        mShareFillAdapter.put(g, GROUP);
+                        allList.add(g);
+                    }
+                    for (String f : friendlist) {
+                        Log.d("FileListListAdapter", "fill allList: " + f);
+                        mShareFillAdapter.put(f, USER);
+                        allList.add(f);
+                    }
+                    textView.setAdapter(new ArrayAdapter<String>(mContext, android.R.layout.simple_list_item_1,allList));
                     textView.setFocusableInTouchMode(true);
                     textView.setHint("Share With");
                     friendsData.close();
+                    
+                    
     
                     //selecting the text
                     textView.setOnItemClickListener(new OnItemClickListener() {
@@ -367,7 +398,7 @@ public class FileListListAdapter extends BaseAdapter implements ListAdapter, OnC
                                       
                             if(st.countTokens() == 0) {                     //entered text is empty
                                 textView.setHint("Share With");
-                                Toast.makeText(mContext, "Please enter friends' names or groups with whom you want to share", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(mContext, "Please enter friends' names or groups with whom you want to share", Toast.LENGTH_LONG).show();
                             } else {                                        //text is not empty
                                 while(st.hasMoreTokens()){
                                     token = st.nextToken();
@@ -376,6 +407,11 @@ public class FileListListAdapter extends BaseAdapter implements ListAdapter, OnC
                                     } else {                                //if token is not empty add it to the list
                                         if(!token.trim().equals("")){
                                             try {
+                                                if (mShareFillAdapter.get(token.trim()) == GROUP) {
+                                                    shareType = "1";
+                                                } else if (mShareFillAdapter.get(token.trim()) == USER) {
+                                                    shareType = "0";
+                                                }
                                                 toShareWith.put(token,shareType);
                                             } catch (JSONException e) {
                                                     e.printStackTrace();
@@ -399,6 +435,7 @@ public class FileListListAdapter extends BaseAdapter implements ListAdapter, OnC
                                             params.put("itemType",  itemType);      //file or folder
                                             params.put("itemSource",itemSource);    //absolute path
                                             params.put("shareType", shareType);     //user or group or link
+                                            Log.e("FileListListAdapter", shareType);
                                             params.put("toShareWith",toShareWith);  //group to share (json object)
                                             params.put("uidOwner",  accountName);   //who own the file 
                                       
@@ -522,6 +559,59 @@ public class FileListListAdapter extends BaseAdapter implements ListAdapter, OnC
     public void onClick(View arg0) {
         // TODO Auto-generated method stub
         
+    }
+    
+    // Helper to get groups user can share with
+    public ArrayList<String> getGroups(String username) {
+        Log.d("FileListListAdapter", "start getGroups");
+        final ArrayList<String> groupList = new ArrayList<String>();
+        
+        final ArrayList<NameValuePair> params = new ArrayList<NameValuePair>();
+        params.add(new BasicNameValuePair("operation", GroupActivity.groupOperation.GET_USERS_GROUP.getGroupOperation()));
+        params.add(new BasicNameValuePair("GID"," "));
+        params.add(new BasicNameValuePair("UID", username));
+        
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+
+                HttpPost post = new HttpPost("http://" + url + "/owncloud/androidcreategroups.php");
+                HttpEntity entity;
+                try {
+                    entity = new UrlEncodedFormEntity(params, "utf-8");
+                    HttpClient client = new DefaultHttpClient();
+                    post.setEntity(entity);
+                    HttpResponse response = client.execute(post);
+
+                    if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                        HttpEntity entityresponse = response.getEntity();
+                        String jsonentity = EntityUtils.toString(entityresponse);
+                        JSONObject obj = new JSONObject(jsonentity);
+                        JSONArray groupArray = (JSONArray) obj.get("getUserGroups");
+                        
+                        JSONArray jary = groupArray;
+                        for (int i = 0; i < jary.length(); i++) {
+                            groupList.add(jary.getString(i));
+                            Log.d("FileListListAdapter", Integer.toString(i));
+                            //Log.d(TAG, jary.getString(i)+" "+obj1.getString(jary.getString(i)));
+                        }
+                        
+                        if (jary.length() == 0) {
+                            Log.d("FileListListAdapter", "unable to get data");  
+                        } 
+                    }
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        new Thread(runnable).start();
+        Log.d("FileListListAdapter", "Finished thread run for group");
+        return groupList;
     }
     
 }

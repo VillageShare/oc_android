@@ -44,6 +44,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.owncloud.android.R;
 import com.owncloud.android.authentication.AccountAuthenticator;
 import com.owncloud.android.authentication.AccountUtils;
@@ -52,7 +53,7 @@ import com.owncloud.android.authentication.AccountUtils;
  * @author Smruthi Manjunath
  *
  */
-public class GroupActivity extends Activity implements OnClickListener{
+public class GroupActivity extends SherlockFragmentActivity implements OnClickListener{
 
     EditText groupName;
     Button CreateGroup;
@@ -66,8 +67,8 @@ public class GroupActivity extends Activity implements OnClickListener{
     String url;
     String username;
     GroupArrayAdapter adapter;
-    private enum groupOperation { 
-        CREATE_GROUP("0"),DELETE_GROUP("1"),GET_USERS_GROUP("4");
+    public enum groupOperation { 
+        CREATE_GROUP("0"),DELETE_GROUP("1"),GET_USERS_GROUP("4"), ADD_TO_GROUP("2"), OPT_OUT_GROUP("3");
         private String operationGroup;
     
     private groupOperation(String s) {

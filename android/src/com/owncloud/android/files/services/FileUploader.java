@@ -40,6 +40,7 @@ import com.owncloud.android.operations.ChunkedUploadFileOperation;
 import com.owncloud.android.operations.CreateFolderOperation;
 import com.owncloud.android.operations.RemoteOperation;
 import com.owncloud.android.operations.RemoteOperationResult;
+import com.owncloud.android.operations.RemoveFileOperation;
 import com.owncloud.android.operations.UploadFileOperation;
 import com.owncloud.android.operations.RemoteOperationResult.ResultCode;
 import com.owncloud.android.utils.OwnCloudVersion;
@@ -525,6 +526,8 @@ public class FileUploader extends Service implements OnDatatransferProgressListe
                 uploadResult = mCurrentUpload.execute(mUploadClient);
                 if (uploadResult.isSuccess()) {
                     saveUploadedFile();
+                   RemoveFileOperation rfo = new RemoveFileOperation(mCurrentUpload.getOldFile(), true, mStorageManager, true);
+                    
                 }
                 
             } catch (AccountsException e) {
