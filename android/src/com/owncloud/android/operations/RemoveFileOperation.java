@@ -20,6 +20,8 @@ package com.owncloud.android.operations;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.jackrabbit.webdav.client.methods.DeleteMethod;
 
+import android.util.Log;
+
 import com.owncloud.android.Log_OC;
 import com.owncloud.android.datamodel.DataStorageManager;
 import com.owncloud.android.datamodel.OCFile;
@@ -73,6 +75,23 @@ public class RemoveFileOperation extends RemoteOperation {
         mRemoveLocalOnly = removeLocalOnly;
     }
     
+    /**
+     * Constructor
+     * 
+     * @param fileToRemove          OCFile instance describing the remote file or folder to remove from the server
+     * @param deleteLocalCopy       When 'true', and a local copy of the file exists, it is also removed.
+     * @param storageManager        Reference to the local database corresponding to the account where the file is contained. 
+     * @param removeLocalOnly       Removes the local copy only
+     * @param client                WebdavClient for use with InstantUpload
+     */
+    public RemoveFileOperation(OCFile fileToRemove, boolean deleteLocalCopy, DataStorageManager storageManager, boolean removeLocalOnly, WebdavClient client) {
+        mFileToRemove = fileToRemove;
+        mDeleteLocalCopy = deleteLocalCopy;
+        mDataStorageManager = storageManager;
+        mRemoveLocalOnly = removeLocalOnly;
+        
+    }
+    
     
     /**
      * Getter for the file to remove (or removed, if the operation was successfully performed).
@@ -90,7 +109,7 @@ public class RemoveFileOperation extends RemoteOperation {
      * @param   client      Client object to communicate with the remote ownCloud server.
      */
     @Override
-    protected RemoteOperationResult run(WebdavClient client) {
+    public RemoteOperationResult run(WebdavClient client) {
         RemoteOperationResult result = null;
         DeleteMethod delete = null;
         try {
@@ -108,11 +127,13 @@ public class RemoveFileOperation extends RemoteOperation {
                 }
             }
             else if(mRemoveLocalOnly) {
+                Log.e(TAG, "RemoveLocalOnly");
                 if (mFileToRemove.isDirectory()) {
                     mDataStorageManager.removeDirectory(mFileToRemove, true, mDeleteLocalCopy);
                 } else {
                     mDataStorageManager.removeFile(mFileToRemove, mDeleteLocalCopy);
                 }
+                Log.e(TAG, "Finished RemoveLocalOnly");
             }
             delete.getResponseBodyAsString();   // exhaust the response, although not interesting
             result = new RemoteOperationResult((delete.succeeded() || status == HttpStatus.SC_NOT_FOUND), status, delete.getResponseHeaders());
@@ -120,8 +141,11 @@ public class RemoveFileOperation extends RemoteOperation {
             
         } catch (Exception e) {
             result = new RemoteOperationResult(e);
-            Log_OC.e(TAG, "Remove " + mFileToRemove.getRemotePath() + ": " + result.getLogMessage(), e);
-            
+            Log.e(TAG, "Some Exception occurred");
+            if (e != null) {
+                Log.e(TAG, e.getMessage());
+                Log_OC.e(TAG, "Remove " + mFileToRemove.getRemotePath() + ": " + result.getLogMessage(), e);
+            }
         } finally {
             if (delete != null)
                 delete.releaseConnection();

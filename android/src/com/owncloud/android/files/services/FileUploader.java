@@ -112,6 +112,7 @@ public class FileUploader extends Service implements OnDatatransferProgressListe
     public static final int UPLOAD_MULTIPLE_FILES = 1;
 
     private static final String TAG = FileUploader.class.getSimpleName();
+    public static final String EXTRA_OC_FILE_PATH = "EXTRA_OC_FILE_PATH";
 
     private Looper mServiceLooper;
     private ServiceHandler mServiceHandler;
@@ -526,7 +527,8 @@ public class FileUploader extends Service implements OnDatatransferProgressListe
                 uploadResult = mCurrentUpload.execute(mUploadClient);
                 if (uploadResult.isSuccess()) {
                     saveUploadedFile();
-                   RemoveFileOperation rfo = new RemoveFileOperation(mCurrentUpload.getOldFile(), true, mStorageManager, true);
+                    RemoteOperation rof = new RemoveFileOperation(mCurrentUpload.getFile(), true, mStorageManager, true);
+                    rof.execute(mUploadClient);
                     
                 }
                 
@@ -761,6 +763,7 @@ public class FileUploader extends Service implements OnDatatransferProgressListe
             mNotificationManager.cancel(R.string.uploader_upload_in_progress_ticker);
 
         } else if (uploadResult.isSuccess()) {
+            Log.d(TAG, "Successful upload");
             // / success -> silent update of progress notification to success
             // message
             mNotification.flags ^= Notification.FLAG_ONGOING_EVENT; // remove
@@ -866,6 +869,7 @@ public class FileUploader extends Service implements OnDatatransferProgressListe
                                 message) == 0) {
                             db.putFileForLater(upload.getOriginalStoragePath(), upload.getAccount().name, message);
                         }
+                       
                     } finally {
                         if (db != null) {
                             db.close();
@@ -901,6 +905,7 @@ public class FileUploader extends Service implements OnDatatransferProgressListe
         end.putExtra(EXTRA_OLD_FILE_PATH, upload.getOriginalStoragePath());
         end.putExtra(ACCOUNT_NAME, upload.getAccount().name);
         end.putExtra(EXTRA_UPLOAD_RESULT, uploadResult.isSuccess());
+        end.putExtra(EXTRA_OC_FILE_PATH, upload.getStoragePath());
         sendStickyBroadcast(end);
     }
 
