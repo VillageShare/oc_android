@@ -229,7 +229,7 @@ public class FileDisplayActivity extends FileActivity implements OCFileListFragm
             @Override
             public void onReceive(Context context, Intent intent) {
                 String message = intent.getStringExtra("message");
-                instantDownloadFile();
+                //instantDownloadFile();
                 // make the http request and update the ui to include the sharer
                 // information
 
