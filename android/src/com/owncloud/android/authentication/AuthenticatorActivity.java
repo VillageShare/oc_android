@@ -225,11 +225,12 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity implemen
         mHostUrlInputEnabled = getResources().getBoolean(R.bool.show_server_url_input);
         locationSpinner = (Spinner) findViewById(R.id.spinner1);
 
+        /* TODO Turn back on for legitage use */
         // / complete label for 'register account' button
-        Button b = (Button) findViewById(R.id.account_register);
-        if (b != null) {
-            b.setText(String.format(getString(R.string.auth_register), getString(R.string.app_name)));
-        }
+       // Button b = (Button) findViewById(R.id.account_register);
+       // if (b != null) {
+       //     b.setText(String.format(getString(R.string.auth_register), getString(R.string.app_name)));
+       // }
 
         // / initialization
         mAccountMgr = AccountManager.get(this);
@@ -1498,8 +1499,8 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity implemen
         mPasswordInput.setText("");
         mUsernameInput.setText("");
         mOkButton.setVisibility(View.INVISIBLE);
-        Button mNewUserButton = (Button) findViewById(R.id.account_register);
-        mNewUserButton.setVisibility(View.INVISIBLE);
+        //Button mNewUserButton = (Button) findViewById(R.id.account_register);
+        //mNewUserButton.setVisibility(View.INVISIBLE);
         mRegButton = (Button) findViewById(R.id.buttonReg);
         mRegButton.setVisibility(View.VISIBLE);
 

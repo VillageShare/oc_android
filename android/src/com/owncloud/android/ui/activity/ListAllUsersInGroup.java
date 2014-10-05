@@ -102,7 +102,8 @@ public class ListAllUsersInGroup extends Activity implements OnClickListener{
             final ArrayList<NameValuePair> params = new ArrayList<NameValuePair>();
             params.add(new BasicNameValuePair("operation",groupOperation.USERS_IN_GROUP.getGroupOperation()));
             params.add(new BasicNameValuePair("GID",groupName));
-            params.add(new BasicNameValuePair("UID", " "));
+            params.add(new BasicNameValuePair("UID", username));
+            params.add(new BasicNameValuePair("SID", username));
             Runnable runnable = new Runnable() {
                 @Override
                 public void run() {
@@ -119,7 +120,7 @@ public class ListAllUsersInGroup extends Activity implements OnClickListener{
                             String jsonentity = EntityUtils.toString(entityresponse);
                             JSONObject obj = new JSONObject(jsonentity);
 
-                            JSONArray jary = obj.getJSONArray("usersinGrup");
+                            JSONArray jary = obj.getJSONArray("usersinGroup");
                             memberNames.clear();
                             for (int i = 0; i < jary.length(); i++) {
                                 memberNames.add(jary.getString(i));
@@ -177,11 +178,12 @@ public class ListAllUsersInGroup extends Activity implements OnClickListener{
                         throw new NullPointerException("Account name not in correct format");
                     }
                     if (val.equals("")) {
-                        Toast.makeText(ListAllUsersInGroup.this, "Please enter a group name", Toast.LENGTH_LONG).show();
+                        Toast.makeText(ListAllUsersInGroup.this, "Please enter a user name", Toast.LENGTH_LONG).show();
                     } else {
                         final ArrayList<NameValuePair> params = new ArrayList<NameValuePair>();
                         params.add(new BasicNameValuePair("operation",groupOperation.ADD_TO_GROUP.getGroupOperation()));
-                        params.add(new BasicNameValuePair("UID", val));
+                        params.add(new BasicNameValuePair("UID", username));
+                        params.add(new BasicNameValuePair("SID", val));
                         params.add(new BasicNameValuePair("GID", groupName));
 
                         Runnable runnable = new Runnable() {
@@ -254,7 +256,8 @@ public class ListAllUsersInGroup extends Activity implements OnClickListener{
         final String userToRemove = ((TextView) ((View) v.getParent()).findViewById(R.id.yourmembertxt)).getText().toString();
         final ArrayList<NameValuePair> params = new ArrayList<NameValuePair>();
         params.add(new BasicNameValuePair("operation", groupOperation.REMOVE_FROM_GROUPS.getGroupOperation()));
-        params.add(new BasicNameValuePair("UID", userToRemove));
+        params.add(new BasicNameValuePair("UID", username));
+        params.add(new BasicNameValuePair("SID", userToRemove));
         params.add(new BasicNameValuePair("GID", groupName));
 
         Runnable runnable = new Runnable() {

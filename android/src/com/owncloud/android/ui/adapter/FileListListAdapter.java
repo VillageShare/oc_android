@@ -570,6 +570,7 @@ public class FileListListAdapter extends BaseAdapter implements ListAdapter, OnC
         params.add(new BasicNameValuePair("operation", GroupActivity.groupOperation.GET_USERS_GROUP.getGroupOperation()));
         params.add(new BasicNameValuePair("GID"," "));
         params.add(new BasicNameValuePair("UID", username));
+        params.add(new BasicNameValuePair("SID", username));
         
         Runnable runnable = new Runnable() {
             @Override

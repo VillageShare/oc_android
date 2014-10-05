@@ -1,5 +1,5 @@
 /*
- * VillageShare project
+/* VillageShare project
  */
 package com.owncloud.android.ui.activity;
 
@@ -80,7 +80,7 @@ public class GroupActivity extends SherlockFragmentActivity implements OnClickLi
     }
  };
     ArrayList<String> groupNames;
-    String TAG = "AddFriendsActivity";
+    String TAG = "GroupActivity";
 
     @Override
     public void onCreate(Bundle SavedInstanceState) {
@@ -122,6 +122,7 @@ public class GroupActivity extends SherlockFragmentActivity implements OnClickLi
         params.add(new BasicNameValuePair("operation",groupOperation.GET_USERS_GROUP.getGroupOperation()));
         params.add(new BasicNameValuePair("GID"," "));
         params.add(new BasicNameValuePair("UID", username));
+        params.add(new BasicNameValuePair("SID", username));
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
@@ -168,7 +169,9 @@ public class GroupActivity extends SherlockFragmentActivity implements OnClickLi
                         }
 
                     } else {
+                        Log.d("Status code: ", ""+response.getStatusLine().getStatusCode());
                         runOnUiThread(new Runnable() {
+                            
                             public void run() {
                                 Toast.makeText(GroupActivity.this,
                                         "Sorry unable to create group, check internet connection and try after sometime",
@@ -218,6 +221,7 @@ public class GroupActivity extends SherlockFragmentActivity implements OnClickLi
             final ArrayList<NameValuePair> params = new ArrayList<NameValuePair>();
             params.add(new BasicNameValuePair("operation",groupOperation.CREATE_GROUP.getGroupOperation()));
             params.add(new BasicNameValuePair("UID", username));
+            params.add(new BasicNameValuePair("SID", username));
             params.add(new BasicNameValuePair("GID", val));
 
             Runnable runnable = new Runnable() {
@@ -289,7 +293,8 @@ public class GroupActivity extends SherlockFragmentActivity implements OnClickLi
             final String groupName = ((TextView) ((View) v.getParent()).findViewById(R.id.yourgrouptxt)).getText().toString();
             final ArrayList<NameValuePair> params = new ArrayList<NameValuePair>();
             params.add(new BasicNameValuePair("operation", groupOperation.DELETE_GROUP.getGroupOperation()));
-            params.add(new BasicNameValuePair("UID", " "));
+            params.add(new BasicNameValuePair("UID", username));
+            params.add(new BasicNameValuePair("SID", username));
             params.add(new BasicNameValuePair("GID", groupName));
 
             Runnable runnable = new Runnable() {

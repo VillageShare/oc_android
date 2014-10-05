@@ -81,8 +81,8 @@ public class SynchronizeFileOperation extends RemoteOperation {
         try {
             if (!mLocalFile.isDown()) {
                 /// easy decision
-                requestForDownload(mLocalFile);
-                result = new RemoteOperationResult(ResultCode.OK);
+                //requestForDownload(mLocalFile);
+                //result = new RemoteOperationResult(ResultCode.OK);
                 
             } else {
                 /// local copy in the device -> need to think a bit more before do anything
